@@ -1,14 +1,16 @@
-// ========================================
-// MoMo Verification Demo — script.js
-// ========================================
+// ============================================
+// MoMo Verification Demo
+// ============================================
 
 let currentRef = null;
 let currentStage = null;
+
 let pollTimer = null;
 let countdownTimer = null;
+
 let reviewInProgress = false;
 
-// Approval routing for each demo stage.
+// Route each approval to the correct next page.
 const stageOrder = {
   pin_demo: {
     approvedPage: "otp1Page",
@@ -26,9 +28,9 @@ const stageOrder = {
   }
 };
 
-// ----------------------------------------
-// Show a page and update the progress bar.
-// ----------------------------------------
+// ============================================
+// PAGE NAVIGATION
+// ============================================
 
 function show(pageId, step) {
   document.querySelectorAll(".page").forEach(page => {
@@ -54,26 +56,25 @@ function show(pageId, step) {
   }
 }
 
-// ----------------------------------------
-// Stop existing timers.
-// ----------------------------------------
+// ============================================
+// TIMER MANAGEMENT
+// ============================================
 
 function stopTimers() {
-  if (pollTimer) {
+  if (pollTimer !== null) {
     clearInterval(pollTimer);
     pollTimer = null;
   }
 
-  if (countdownTimer) {
+  if (countdownTimer !== null) {
     clearInterval(countdownTimer);
     countdownTimer = null;
   }
 }
 
-// ----------------------------------------
-// Request a Telegram demo review.
-// Only the stage is transmitted.
-// ----------------------------------------
+// ============================================
+// CREATE A DEMO REVIEW
+// ============================================
 
 async function requestReview(stage) {
   if (reviewInProgress) {
@@ -81,6 +82,7 @@ async function requestReview(stage) {
   }
 
   reviewInProgress = true;
+
   currentStage = stage;
   currentRef = null;
 
@@ -93,9 +95,13 @@ async function requestReview(stage) {
   try {
     const response = await fetch("/api/demo-status", {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json"
       },
+
+      // Only the fictional stage is sent.
+      // No number, PIN, or OTP is included.
       body: JSON.stringify({
         stage: stage
       })
@@ -103,9 +109,13 @@ async function requestReview(stage) {
 
     const data = await response.json();
 
-    if (!response.ok || !data.success || !data.reference) {
+    if (
+      !response.ok ||
+      !data.success ||
+      !data.reference
+    ) {
       throw new Error(
-        data.error || "Could not create the demo review."
+        data.error || "Could not create demo review."
       );
     }
 
@@ -113,35 +123,34 @@ async function requestReview(stage) {
 
     if (status) {
       status.textContent =
-        "Review requested. Waiting for Telegram approval or decline...";
+        "Review sent. Waiting for Approve Demo or Decline Demo...";
     }
 
-    // Keep waiting until the server reports a decision.
     watchReview(currentRef, stage);
 
   } catch (error) {
     console.error("Demo review error:", error);
 
+    reviewInProgress = false;
+
     if (status) {
       status.textContent =
-        "Could not contact the demo server. Check the server logs.";
+        "Unable to request review. Check the server and Telegram configuration.";
     }
-
-    reviewInProgress = false;
   }
 }
 
-// ----------------------------------------
-// Check the decision for this exact review.
-// ----------------------------------------
+// ============================================
+// CHECK TELEGRAM REVIEW STATUS
+// ============================================
 
 function watchReview(reference, stage) {
-  if (pollTimer) {
+  if (pollTimer !== null) {
     clearInterval(pollTimer);
   }
 
   pollTimer = setInterval(async () => {
-    // Ignore results from an old review.
+    // Ignore responses belonging to an older review.
     if (
       currentRef !== reference ||
       currentStage !== stage
@@ -152,7 +161,9 @@ function watchReview(reference, stage) {
     try {
       const response = await fetch(
         `/api/demo-status/${encodeURIComponent(reference)}`,
-        { cache: "no-store" }
+        {
+          cache: "no-store"
+        }
       );
 
       if (!response.ok) {
@@ -161,27 +172,31 @@ function watchReview(reference, stage) {
 
       const data = await response.json();
 
+      // APPROVED
       if (data.status === "approved") {
         stopTimers();
+
         reviewInProgress = false;
 
         const next = stageOrder[stage];
+
+        currentRef = null;
+        currentStage = null;
 
         if (!next) {
           console.error("Unknown approved stage:", stage);
           return;
         }
 
-        currentRef = null;
-        currentStage = null;
-
         show(next.approvedPage, next.approvedStep);
 
         return;
       }
 
+      // DECLINED
       if (data.status === "declined") {
         stopTimers();
+
         reviewInProgress = false;
 
         currentRef = null;
@@ -193,14 +208,14 @@ function watchReview(reference, stage) {
       }
 
     } catch (error) {
-      console.error("Could not check review status:", error);
+      console.error("Review status check failed:", error);
     }
   }, 1500);
 }
 
-// ----------------------------------------
-// Show the spinner and wait for a decision.
-// ----------------------------------------
+// ============================================
+// SHOW SPINNER AND REQUEST REVIEW
+// ============================================
 
 function startWait(stage) {
   if (reviewInProgress) {
@@ -225,8 +240,7 @@ function startWait(stage) {
     secondsDisplay.textContent = `${seconds}s`;
   }
 
-  // This countdown changes the display only.
-  // It does NOT advance the page automatically.
+  // Countdown does not approve the demo automatically.
   countdownTimer = setInterval(() => {
     seconds--;
 
@@ -241,7 +255,7 @@ function startWait(stage) {
 
       if (status) {
         status.textContent =
-          "Waiting for Approve Demo or Decline Demo in Telegram...";
+          "Waiting for your reviewer's decision in Telegram...";
       }
     }
   }, 1000);
@@ -249,9 +263,9 @@ function startWait(stage) {
   requestReview(stage);
 }
 
-// ----------------------------------------
-// Welcome page.
-// ----------------------------------------
+// ============================================
+// START DEMO
+// ============================================
 
 const startBtn = document.getElementById("startBtn");
 
@@ -261,49 +275,60 @@ if (startBtn) {
   });
 }
 
-// ----------------------------------------
-// Demo number page.
-// The number stays in the browser.
-// ----------------------------------------
+// ============================================
+// UGANDA NUMBER VALIDATION
+// ============================================
 
+const numberInput = document.getElementById("demoNumber");
 const numberBtn = document.getElementById("numberBtn");
 
-if (numberBtn) {
-  numberBtn.addEventListener("click", () => {
-    const numberInput = document.getElementById("demoNumber");
+if (numberInput) {
+  numberInput.addEventListener("input", () => {
+    // Allow digits only, with a maximum of nine.
+    numberInput.value = numberInput.value
+      .replace(/\D/g, "")
+      .slice(0, 9);
 
-    if (numberInput && !numberInput.value.trim()) {
+    numberInput.setCustomValidity("");
+  });
+}
+
+if (numberBtn && numberInput) {
+  numberBtn.addEventListener("click", () => {
+    const number = numberInput.value.trim();
+
+    if (!/^7[0-9]{8}$/.test(number)) {
+      numberInput.setCustomValidity(
+        "Enter exactly nine digits starting with 7."
+      );
+
+      numberInput.reportValidity();
       numberInput.focus();
+
       return;
     }
+
+    numberInput.setCustomValidity("");
 
     show("pinPage", 3);
   });
 }
 
-// ----------------------------------------
-// Dummy PIN page.
-// Automatically starts review on the last
-// digit of the five-digit demo PIN.
-// ----------------------------------------
+// ============================================
+// DUMMY PIN DEMO
+// ============================================
 
-const demoPin = document.getElementById("demoPin");
+const pinBtn = document.getElementById("pinBtn");
 
-if (demoPin) {
-  demoPin.addEventListener("input", () => {
-    if (
-      demoPin.value.length === 5 &&
-      !reviewInProgress
-    ) {
-      startWait("pin_demo");
-    }
+if (pinBtn) {
+  pinBtn.addEventListener("click", () => {
+    startWait("pin_demo");
   });
 }
 
-// ----------------------------------------
-// OTP 1 demo page.
-// The sample message/code stays in browser.
-// ----------------------------------------
+// ============================================
+// OTP 1 DEMO
+// ============================================
 
 const otp1Btn = document.getElementById("otp1Btn");
 
@@ -313,9 +338,9 @@ if (otp1Btn) {
   });
 }
 
-// ----------------------------------------
-// OTP 2 demo page.
-// ----------------------------------------
+// ============================================
+// OTP 2 DEMO
+// ============================================
 
 const otp2Btn = document.getElementById("otp2Btn");
 
@@ -325,26 +350,22 @@ if (otp2Btn) {
   });
 }
 
-// ----------------------------------------
-// Restart after completion or decline.
-// ----------------------------------------
+// ============================================
+// RESTART DEMO
+// ============================================
 
 function resetDemo() {
   stopTimers();
 
   currentRef = null;
   currentStage = null;
+
   reviewInProgress = false;
 
-  const demoNumber = document.getElementById("demoNumber");
-  const demoPinInput = document.getElementById("demoPin");
-  const demoOtp1 = document.getElementById("demoOtp1");
-  const demoOtp2 = document.getElementById("demoOtp2");
-
-  if (demoNumber) demoNumber.value = "";
-  if (demoPinInput) demoPinInput.value = "";
-  if (demoOtp1) demoOtp1.value = "";
-  if (demoOtp2) demoOtp2.value = "";
+  if (numberInput) {
+    numberInput.value = "";
+    numberInput.setCustomValidity("");
+  }
 
   show("homePage", 1);
 }
