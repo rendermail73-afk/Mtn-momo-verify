@@ -2,170 +2,234 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>MoMo Verification Demo</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>MoMo-Inspired Demo</title>
 
   <style>
+    :root {
+      --yellow: #ffcc00;
+      --black: #111111;
+      --white: #ffffff;
+      --background: #f5f5f5;
+      --gray: #666666;
+      --green: #16803c;
+      --red: #c62828;
+      --border: #dddddd;
+    }
+
     * {
       box-sizing: border-box;
     }
 
-    :root {
-      --yellow: #ffcc00;
-      --black: #171717;
-      --background: #f5f5f5;
-      --green: #16803d;
-      --red: #b42318;
-    }
-
     body {
       margin: 0;
-      padding: 18px;
-      background: var(--background);
+      font-family: Arial, Helvetica, sans-serif;
       color: var(--black);
-      font-family: Arial, sans-serif;
+      background: var(--background);
     }
 
-    .container {
-      max-width: 430px;
-      margin: 22px auto;
-      padding: 24px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.09);
+    .top-bar {
+      height: 9px;
+      background: var(--yellow);
     }
 
     header {
-      margin: -24px -24px 22px;
-      padding: 23px 18px;
-      color: var(--black);
-      background: var(--yellow);
+      background: var(--black);
+      color: var(--white);
+      padding: 20px 16px;
       text-align: center;
-      border-radius: 12px 12px 0 0;
+      border-bottom: 5px solid var(--yellow);
     }
 
     .brand {
-      font-size: 13px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-
-    h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 27px;
+      font-weight: 900;
+      letter-spacing: 1px;
     }
 
-    h2 {
+    .brand span {
+      color: var(--yellow);
+    }
+
+    .header-subtitle {
+      margin: 7px 0 0;
+      color: #eeeeee;
+      font-size: 13px;
+    }
+
+    .demo-banner {
+      background: #fff4bf;
+      border-bottom: 1px solid #e7ce69;
+      color: #473900;
+      padding: 12px 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    main {
+      width: 100%;
+      max-width: 480px;
+      padding: 22px 16px 35px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      overflow: hidden;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.07);
+    }
+
+    .card-heading {
+      background: var(--yellow);
+      padding: 19px 18px;
+    }
+
+    .card-heading h1 {
+      margin: 0;
       font-size: 21px;
     }
 
-    p {
+    .card-heading p {
+      margin: 7px 0 0;
+      font-size: 13px;
       line-height: 1.5;
     }
 
-    .notice {
-      padding: 12px;
-      margin-bottom: 18px;
-      color: #594600;
-      background: #fff5cc;
-      border: 1px solid #ffe580;
-      border-radius: 7px;
-      font-size: 14px;
+    .card-body {
+      padding: 22px 18px;
     }
 
-    .page {
-      display: none;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    label {
-      display: block;
-      margin: 16px 0 8px;
+    .step-label {
       font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 10px;
     }
 
-    input,
-    textarea {
+    .progress-track {
       width: 100%;
-      padding: 13px;
-      border: 1px solid #c9c9c9;
+      height: 7px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #e8e8e8;
+      margin-bottom: 25px;
+    }
+
+    .progress-bar {
+      width: 33.333%;
+      height: 100%;
+      background: var(--yellow);
+      transition: width 0.25s ease;
+    }
+
+    .demo-step h2,
+    #completionPage h2 {
+      font-size: 19px;
+      margin: 0 0 12px;
+    }
+
+    .demo-step p,
+    #completionPage p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #444444;
+    }
+
+    .step-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background: var(--yellow);
+      font-size: 23px;
+      font-weight: bold;
+      margin-bottom: 18px;
+    }
+
+    .status {
+      margin: 20px 0;
+      padding: 12px;
       border-radius: 7px;
-      font-size: 17px;
-      font-family: Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
     }
 
-    input:focus,
-    textarea:focus {
-      outline: 2px solid var(--yellow);
-      border-color: var(--black);
+    .status.info {
+      color: #333333;
+      background: #f2f2f2;
     }
 
-    button {
+    .status.pending {
+      color: #604c00;
+      background: #fff4bf;
+    }
+
+    .status.success {
+      color: #145b2b;
+      background: #e6f5e9;
+    }
+
+    .status.error {
+      color: #8a1717;
+      background: #ffebeb;
+    }
+
+    .button {
+      display: block;
       width: 100%;
-      padding: 14px;
-      margin-top: 16px;
       border: 0;
       border-radius: 7px;
-      background: var(--yellow);
-      color: var(--black);
-      font-size: 16px;
+      padding: 15px 14px;
+      font-size: 15px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.2s ease;
     }
 
-    button:disabled {
+    .button:disabled {
       opacity: 0.55;
       cursor: not-allowed;
     }
 
-    .secondary {
-      background: var(--black);
-      color: white;
-    }
-
-    .phone-input {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      border: 1px solid #c9c9c9;
-      border-radius: 7px;
-      overflow: hidden;
-    }
-
-    .country-code {
-      display: flex;
-      align-items: center;
-      align-self: stretch;
-      padding: 0 10px;
-      background: var(--yellow);
+    .button-primary {
       color: var(--black);
-      white-space: nowrap;
-      font-weight: bold;
+      background: var(--yellow);
     }
 
-    .phone-input input {
-      min-width: 0;
-      border: 0;
-      border-radius: 0;
-      outline: none;
+    .button-secondary {
+      color: var(--white);
+      background: var(--black);
     }
 
-    .hidden {
-      display: none !important;
+    .button-outline {
+      color: var(--black);
+      background: var(--white);
+      border: 1px solid #bbbbbb;
+    }
+
+    .spinner-wrap {
+      text-align: center;
+      margin: 20px 0;
     }
 
     .spinner {
-      width: 50px;
-      height: 50px;
-      margin: 25px auto;
-      border: 5px solid #eee;
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border: 4px solid #eeeeee;
       border-top-color: var(--yellow);
-      border-right-color: var(--black);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -176,9 +240,192 @@
       }
     }
 
-    .sample {
-      padding: 16px;
-      margin: 18px 0;
-      background: #fff8dc;
-      border: 1px solid #ffe580;
-      border-radius: 8
+    .completion-icon {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--yellow);
+      border-radius: 50%;
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 18px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px 15px;
+      color: var(--gray);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top-bar"></div>
+
+  <header>
+    <p class="brand">MoMo<span> DEMO</span></p>
+    <p class="header-subtitle">
+      Yellow-and-black mobile money interface demonstration
+    </p>
+  </header>
+
+  <div class="demo-banner">
+    <strong>DEMO ONLY:</strong>
+    This is an independent demonstration, not an official MTN service.
+    Do not enter real financial credentials.
+  </div>
+
+  <main>
+    <section class="card">
+      <div class="card-heading">
+        <h1>Demo Verification</h1>
+        <p>
+          Explore a simulated approval workflow using Telegram.
+        </p>
+      </div>
+
+      <div class="card-body">
+        <div class="step-label" id="stepLabel">
+          Demo step 1 of 3
+        </div>
+
+        <div
+          class="progress-track"
+          role="progressbar"
+          aria-label="Demo progress"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <section class="demo-step" data-step="1">
+          <div class="step-number">1</div>
+
+          <h2>Start the demonstration</h2>
+
+          <p>
+            This step creates a random demo reference and sends the
+            simulated request to your Telegram bot for review.
+          </p>
+
+          <p>
+            No phone number, PIN, password, or verification code is
+            requested or transmitted.
+          </p>
+        </section>
+
+        <section class="demo-step" data-step="2" hidden>
+          <div class="step-number">2</div>
+
+          <h2>Continue the demonstration</h2>
+
+          <p>
+            This is the second simulated stage. Press the button to
+            request a new approval in Telegram.
+          </p>
+
+          <p>
+            The Telegram message contains only the demo stage and
+            a random reference.
+          </p>
+        </section>
+
+        <section class="demo-step" data-step="3" hidden>
+          <div class="step-number">3</div>
+
+          <h2>Final demonstration step</h2>
+
+          <p>
+            Submit this final simulated stage for review.
+            Approving it completes the demonstration.
+          </p>
+
+          <p>
+            Declining it allows you to retry the same stage.
+          </p>
+        </section>
+
+        <section id="completionPage" hidden>
+          <div class="completion-icon">✓</div>
+
+          <h2>Demo completed</h2>
+
+          <p>
+            All three simulated stages have been completed.
+            No financial credentials were used.
+          </p>
+        </section>
+
+        <div
+          class="spinner-wrap"
+          id="spinner"
+          hidden
+          aria-live="polite"
+        >
+          <div class="spinner"></div>
+          <p>Waiting for demo review...</p>
+        </div>
+
+        <div
+          class="status info"
+          id="statusMessage"
+          role="status"
+          aria-live="polite"
+        >
+          This is a simulated demonstration.
+        </div>
+
+        <button
+          class="button button-primary"
+          id="startButton"
+          type="button"
+        >
+          Start Demo
+        </button>
+
+        <button
+          class="button button-primary"
+          id="continueButton"
+          type="button"
+          hidden
+        >
+          Continue Demo
+        </button>
+
+        <button
+          class="button button-primary"
+          id="retryButton"
+          type="button"
+          hidden
+        >
+          Retry This Step
+        </button>
+
+        <button
+          class="button button-secondary"
+          id="resetButton"
+          type="button"
+        >
+          Restart Demo
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Independent educational demonstration.<br>
+    Not affiliated with or endorsed by MTN.
+  </footer>
+
+  <script src="/script.js" defer></script>
+</body>
+</html>
