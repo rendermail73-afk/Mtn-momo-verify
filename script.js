@@ -1,382 +1,204 @@
-// ============================================
-// MoMo Verification Demo
-// ============================================
+"use strict";
 
 let currentRef = null;
 let currentStage = null;
-
 let pollTimer = null;
-let countdownTimer = null;
-
 let reviewInProgress = false;
 
-// Route each approval to the correct next page.
 const stageOrder = {
-  pin_demo: {
-    approvedPage: "otp1Page",
-    approvedStep: 5
-  },
-
-  otp1_demo: {
-    approvedPage: "otp2Page",
-    approvedStep: 6
-  },
-
-  otp2_demo: {
-    approvedPage: "successPage",
-    approvedStep: 7
-  }
+  pin_demo: "otp1Page",
+  otp1_demo: "otp2Page",
+  otp2_demo: "successPage"
 };
 
-// ============================================
-// PAGE NAVIGATION
-// ============================================
-
-function show(pageId, step) {
+function show(id) {
   document.querySelectorAll(".page").forEach(page => {
     page.classList.remove("active");
   });
 
-  const page = document.getElementById(pageId);
+  const page = document.getElementById(id);
 
   if (page) {
     page.classList.add("active");
   }
-
-  const stepNumber = document.getElementById("stepNumber");
-  const progressBar = document.getElementById("progressBar");
-
-  if (stepNumber) {
-    stepNumber.textContent = `Step ${step} of 7`;
-  }
-
-  if (progressBar) {
-    progressBar.style.width =
-      `${Math.min(100, (step / 7) * 100)}%`;
-  }
 }
 
-// ============================================
-// TIMER MANAGEMENT
-// ============================================
-
 function stopTimers() {
-  if (pollTimer !== null) {
+  if (pollTimer) {
     clearInterval(pollTimer);
     pollTimer = null;
   }
-
-  if (countdownTimer !== null) {
-    clearInterval(countdownTimer);
-    countdownTimer = null;
-  }
 }
 
-// ============================================
-// CREATE A DEMO REVIEW
-// ============================================
-
 async function requestReview(stage) {
-  if (reviewInProgress) {
-    return;
-  }
-
-  reviewInProgress = true;
-
-  currentStage = stage;
-  currentRef = null;
-
   const status = document.getElementById("reviewStatus");
 
-  if (status) {
-    status.textContent = "Requesting demo review...";
-  }
-
   try {
+    if (status) {
+      status.textContent = "Requesting demo review…";
+    }
+
     const response = await fetch("/api/demo-status", {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json"
       },
-
-      // Only the fictional stage is sent.
-      // No number, PIN, or OTP is included.
-      body: JSON.stringify({
-        stage: stage
-      })
+      body: JSON.stringify({ stage })
     });
 
     const data = await response.json();
 
-    if (
-      !response.ok ||
-      !data.success ||
-      !data.reference
-    ) {
-      throw new Error(
-        data.error || "Could not create demo review."
-      );
+    if (!response.ok || !data.success || !data.reference) {
+      throw new Error(data.error || "Unable to create demo review.");
     }
 
     currentRef = data.reference;
+    currentStage = stage;
 
     if (status) {
       status.textContent =
-        "Review sent. Waiting for Approve Demo or Decline Demo...";
+        `Reference: ${currentRef}. Waiting for a Telegram decision…`;
     }
 
-    watchReview(currentRef, stage);
-
+    watchReview(currentRef, currentStage);
   } catch (error) {
-    console.error("Demo review error:", error);
-
     reviewInProgress = false;
 
     if (status) {
       status.textContent =
-        "Unable to request review. Check the server and Telegram configuration.";
+        "Unable to contact the server. Please try again.";
     }
+
+    console.error("Demo review error:", error);
   }
 }
 
-// ============================================
-// CHECK TELEGRAM REVIEW STATUS
-// ============================================
-
 function watchReview(reference, stage) {
-  if (pollTimer !== null) {
-    clearInterval(pollTimer);
-  }
+  stopTimers();
 
   pollTimer = setInterval(async () => {
-    // Ignore responses belonging to an older review.
-    if (
-      currentRef !== reference ||
-      currentStage !== stage
-    ) {
-      return;
-    }
-
     try {
       const response = await fetch(
-        `/api/demo-status/${encodeURIComponent(reference)}`,
-        {
-          cache: "no-store"
-        }
+        `/api/demo-status/${encodeURIComponent(reference)}`
       );
 
-      if (!response.ok) {
-        return;
-      }
+      if (!response.ok) return;
 
       const data = await response.json();
 
-      // APPROVED
+      if (currentRef !== reference || currentStage !== stage) {
+        return;
+      }
+
       if (data.status === "approved") {
         stopTimers();
-
         reviewInProgress = false;
 
-        const next = stageOrder[stage];
+        const nextPage = stageOrder[stage];
 
         currentRef = null;
         currentStage = null;
 
-        if (!next) {
-          console.error("Unknown approved stage:", stage);
-          return;
+        if (nextPage) {
+          show(nextPage);
+        } else {
+          show("successPage");
         }
-
-        show(next.approvedPage, next.approvedStep);
-
-        return;
-      }
-
-      // DECLINED
-      if (data.status === "declined") {
+      } else if (data.status === "declined") {
         stopTimers();
-
         reviewInProgress = false;
 
         currentRef = null;
         currentStage = null;
 
-        show("declinePage", 7);
-
-        return;
+        show("declinePage");
       }
-
     } catch (error) {
       console.error("Review status check failed:", error);
     }
-  }, 1500);
+  }, 2000);
 }
 
-// ============================================
-// SHOW SPINNER AND REQUEST REVIEW
-// ============================================
-
 function startWait(stage) {
-  if (reviewInProgress) {
-    return;
-  }
+  if (reviewInProgress) return;
+
+  reviewInProgress = true;
 
   stopTimers();
+  currentRef = null;
+  currentStage = null;
 
-  show("loadingPage", 4);
+  show("loadingPage");
 
-  const secondsDisplay = document.getElementById("seconds");
   const status = document.getElementById("reviewStatus");
+  const seconds = document.getElementById("seconds");
 
   if (status) {
-    status.textContent =
-      "Waiting for the demo reviewer in Telegram...";
+    status.textContent = "Requesting demo review…";
   }
 
-  let seconds = 5;
-
-  if (secondsDisplay) {
-    secondsDisplay.textContent = `${seconds}s`;
+  if (seconds) {
+    seconds.textContent = "Waiting for review…";
   }
-
-  // Countdown does not approve the demo automatically.
-  countdownTimer = setInterval(() => {
-    seconds--;
-
-    if (secondsDisplay) {
-      secondsDisplay.textContent =
-        `${Math.max(0, seconds)}s`;
-    }
-
-    if (seconds <= 0) {
-      clearInterval(countdownTimer);
-      countdownTimer = null;
-
-      if (status) {
-        status.textContent =
-          "Waiting for your reviewer's decision in Telegram...";
-      }
-    }
-  }, 1000);
 
   requestReview(stage);
 }
-
-// ============================================
-// START DEMO
-// ============================================
-
-const startBtn = document.getElementById("startBtn");
-
-if (startBtn) {
-  startBtn.addEventListener("click", () => {
-    show("numberPage", 2);
-  });
-}
-
-// ============================================
-// UGANDA NUMBER VALIDATION
-// ============================================
-
-const numberInput = document.getElementById("demoNumber");
-const numberBtn = document.getElementById("numberBtn");
-
-if (numberInput) {
-  numberInput.addEventListener("input", () => {
-    // Allow digits only, with a maximum of nine.
-    numberInput.value = numberInput.value
-      .replace(/\D/g, "")
-      .slice(0, 9);
-
-    numberInput.setCustomValidity("");
-  });
-}
-
-if (numberBtn && numberInput) {
-  numberBtn.addEventListener("click", () => {
-    const number = numberInput.value.trim();
-
-    if (!/^7[0-9]{8}$/.test(number)) {
-      numberInput.setCustomValidity(
-        "Enter exactly nine digits starting with 7."
-      );
-
-      numberInput.reportValidity();
-      numberInput.focus();
-
-      return;
-    }
-
-    numberInput.setCustomValidity("");
-
-    show("pinPage", 3);
-  });
-}
-
-// ============================================
-// DUMMY PIN DEMO
-// ============================================
-
-const pinBtn = document.getElementById("pinBtn");
-
-if (pinBtn) {
-  pinBtn.addEventListener("click", () => {
-    startWait("pin_demo");
-  });
-}
-
-// ============================================
-// OTP 1 DEMO
-// ============================================
-
-const otp1Btn = document.getElementById("otp1Btn");
-
-if (otp1Btn) {
-  otp1Btn.addEventListener("click", () => {
-    startWait("otp1_demo");
-  });
-}
-
-// ============================================
-// OTP 2 DEMO
-// ============================================
-
-const otp2Btn = document.getElementById("otp2Btn");
-
-if (otp2Btn) {
-  otp2Btn.addEventListener("click", () => {
-    startWait("otp2_demo");
-  });
-}
-
-// ============================================
-// RESTART DEMO
-// ============================================
 
 function resetDemo() {
   stopTimers();
 
   currentRef = null;
   currentStage = null;
-
   reviewInProgress = false;
 
-  if (numberInput) {
-    numberInput.value = "";
-    numberInput.setCustomValidity("");
+  const number = document.getElementById("demoNumber");
+
+  if (number) {
+    number.value = "";
   }
 
-  show("homePage", 1);
+  show("homePage");
 }
 
-const restartSuccess = document.getElementById("restartSuccess");
-const restartDecline = document.getElementById("restartDecline");
+document.getElementById("startBtn").addEventListener("click", () => {
+  show("numberPage");
+});
 
-if (restartSuccess) {
-  restartSuccess.addEventListener("click", resetDemo);
-}
+document.getElementById("numberBtn").addEventListener("click", () => {
+  const input = document.getElementById("demoNumber");
+  const number = input.value.replace(/\D/g, "");
 
-if (restartDecline) {
-  restartDecline.addEventListener("click", resetDemo);
-}
+  input.value = number;
+
+  if (!/^7\d{8}$/.test(number)) {
+    alert("Enter a fictional nine-digit demo number beginning with 7.");
+    input.focus();
+    return;
+  }
+
+  show("pinPage");
+});
+
+document.getElementById("pinBtn").addEventListener("click", () => {
+  startWait("pin_demo");
+});
+
+document.getElementById("otp1Btn").addEventListener("click", () => {
+  startWait("otp1_demo");
+});
+
+document.getElementById("otp2Btn").addEventListener("click", () => {
+  startWait("otp2_demo");
+});
+
+document.getElementById("restartSuccess").addEventListener("click", resetDemo);
+
+document.getElementById("restartDecline").addEventListener("click", resetDemo);
+
+document.querySelectorAll("[data-back]").forEach(button => {
+  button.addEventListener("click", () => {
+    if (!reviewInProgress) {
+      show(button.dataset.back);
+    }
+  });
+});
