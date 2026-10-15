@@ -1,0 +1,29 @@
+* { box-sizing: border-box; }
+:root { font-family: Arial, Helvetica, sans-serif; color: #152238; background: #f3f6fa; }
+body { margin: 0; min-height: 100vh; padding: 20px 14px 30px; }
+header { max-width: 520px; margin: 0 auto 18px; padding: 14px 16px; display: flex; align-items: center; gap: 10px; background: #ffcc00; border-radius: 12px; color: #151515; box-shadow: 0 4px 14px #16243a12; }
+.brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 2px solid #171717; border-radius: 50%; font-weight: 900; }
+.demo-tag { margin-left: auto; font-size: 11px; font-weight: 800; background: #fff5c2; border-radius: 5px; padding: 5px 7px; }
+.card { max-width: 520px; min-height: 420px; margin: auto; padding: 24px; background: #fff; border: 1px solid #dce4ee; border-radius: 16px; box-shadow: 0 10px 30px #1522380c; }
+.progress { margin-bottom: 22px; font-size: 12px; color: #66758a; }
+.track { height: 5px; margin-top: 8px; background: #e9edf3; border-radius: 8px; overflow: hidden; }
+.track i { display: block; width: 14%; height: 100%; background: #ffcc00; transition: width .2s; }
+.page { display: none; text-align: center; }
+.page.active { display: block; }
+.symbol { width: 76px; height: 76px; margin: 8px auto 14px; display: grid; place-items: center; border-radius: 50%; background: #fff2b3; font-size: 35px; }
+h1 { margin: 10px 0; font-size: 24px; }
+p { line-height: 1.5; color: #536176; font-size: 14px; }
+button { width: 100%; margin-top: 15px; border: 0; border-radius: 9px; padding: 14px 16px; background: #ffcc00; color: #181818; font-weight: 800; font-size: 15px; cursor: pointer; }
+button:hover { filter: brightness(.97); }
+.notice, .sample-message { margin-top: 15px; padding: 12px; border-radius: 9px; background: #eef6ff; color: #284a72; text-align: left; font-size: 13px; line-height: 1.45; }
+.sample-message { border-left: 4px solid #ffcc00; background: #fff9dc; color: #4e4520; overflow-wrap: anywhere; }
+.hint { font-size: 12px; color: #7a8798; }
+.spinner { width: 56px; height: 56px; margin: 18px auto; border: 6px solid #e5eaf0; border-top-color: #1674d1; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.timer { margin: 20px auto 0; padding: 12px; max-width: 240px; border: 1px solid #dbe5f1; border-radius: 10px; }
+.timer span { display: block; color: #718096; font-size: 12px; }
+.timer strong { display: block; margin-top: 4px; font-size: 23px; color: #1769aa; }
+.success-symbol { background: #d9f8e7; color: #07874c; font-size: 45px; font-weight: 900; }
+.decline-symbol { background: #ffe1e1; color: #d92d2d; font-size: 45px; font-weight: 900; }
+footer { max-width: 520px; margin: 16px auto 0; text-align: center; color: #7b8796; font-size: 11px; line-height: 1.5; }
+@media (max-width: 420px) { .card { padding: 18px; } h1 { font-size: 21px; } }

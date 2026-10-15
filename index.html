@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MoMo Verification Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><span class="brand-mark">M</span><strong>MoMo Verification Demo</strong><span class="demo-tag">DEMO</span></header>
+  <main class="card">
+    <div class="progress"><span id="stepNumber">Step 1 of 7</span><div class="track"><i id="progressBar"></i></div></div>
+
+    <section class="page active" id="homePage">
+      <div class="symbol">📱</div><h1>Verification Demo</h1>
+      <p>A simulated verification-style workflow using predefined dummy values only.</p>
+      <div class="notice">Not an official MTN service. Never enter real credentials or real SMS messages.</div>
+      <button id="startBtn">Start Demo →</button>
+    </section>
+
+    <section class="page" id="numberPage">
+      <div class="symbol">☎️</div><h1>Enter a Demo Number</h1>
+      <p>Use the sample number displayed here. It is not submitted anywhere.</p>
+      <div class="sample-message">Sample number: <strong>0700000000</strong></div>
+      <button id="numberBtn">Continue</button>
+    </section>
+
+    <section class="page" id="pinPage">
+      <div class="symbol">🔒</div><h1>Dummy PIN</h1>
+      <p>Use the predefined sample value shown below. No PIN entry is needed.</p>
+      <div class="sample-message">Demo PIN: <strong>12345</strong></div>
+      <button id="pinBtn">Continue Demo</button>
+    </section>
+
+    <section class="page" id="loadingPage">
+      <div class="spinner"></div><h1>Processing Demo</h1>
+      <p>Please wait while the demo review is requested.</p>
+      <div class="timer"><span>Time remaining</span><strong id="seconds">5s</strong></div>
+      <p id="reviewStatus" class="hint">Waiting for Telegram review…</p>
+    </section>
+
+    <section class="page" id="otp1Page">
+      <div class="symbol">💬</div><h1>OTP 1 — Sample SMS Message</h1>
+      <p>Use this synthetic message to simulate copying a message from a normal SMS inbox. Do not use a real SMS.</p>
+      <div class="sample-message">Demo SMS: “Your sample verification message is DEMO-482736. This is not a real code.”</div>
+      <button id="otp1Btn">Use Sample Message</button>
+    </section>
+
+    <section class="page" id="otp2Page">
+      <div class="symbol">🔢</div><h1>OTP 2 — Dummy Code</h1>
+      <p>Use this predefined test code. Do not use a real OTP.</p>
+      <div class="sample-message">Demo code: <strong>222222</strong></div>
+      <button id="otp2Btn">Use Sample Code</button>
+    </section>
+
+    <section class="page" id="successPage">
+      <div class="symbol success-symbol">✓</div><h1>Demo Completed</h1>
+      <p>The demonstration workflow completed successfully.</p>
+      <button id="restartSuccess">Start Again</button>
+    </section>
+
+    <section class="page" id="declinePage">
+      <div class="symbol decline-symbol">✕</div><h1>Demo Declined</h1>
+      <p>The demo reviewer declined this stage.</p>
+      <button id="restartDecline">Try Again</button>
+    </section>
+  </main>
+  <footer>Demo only · Telegram receives predefined synthetic examples, never visitor-entered credentials or messages.</footer>
+  <script src="script.js"></script>
+</body>
+</html>
