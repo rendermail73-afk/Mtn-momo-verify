@@ -131,15 +131,32 @@
     .phone-input {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0;
+      border: 1px solid #c9c9c9;
+      border-radius: 7px;
+      overflow: hidden;
     }
 
     .country-code {
-      padding: 13px 9px;
-      background: #eee;
-      border: 1px solid #ccc;
-      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      align-self: stretch;
+      padding: 0 10px;
+      background: var(--yellow);
+      color: var(--black);
       white-space: nowrap;
+      font-weight: bold;
+    }
+
+    .phone-input input {
+      min-width: 0;
+      border: 0;
+      border-radius: 0;
+      outline: none;
+    }
+
+    .hidden {
+      display: none !important;
     }
 
     .spinner {
@@ -164,216 +181,4 @@
       margin: 18px 0;
       background: #fff8dc;
       border: 1px solid #ffe580;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 23px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      overflow-wrap: anywhere;
-    }
-
-    .message-box {
-      padding: 14px;
-      background: #f1f1f1;
-      border-radius: 7px;
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-    }
-
-    .success {
-      color: var(--green);
-    }
-
-    .declined {
-      color: var(--red);
-    }
-
-    .muted {
-      color: #666;
-      font-size: 13px;
-    }
-
-    footer {
-      margin-top: 25px;
-      text-align: center;
-      color: #666;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-  </style>
-</head>
-
-<body>
-  <main class="container">
-
-    <header>
-      <div class="brand">MOMO DEMONSTRATION</div>
-      <h1>Verification Demo</h1>
-    </header>
-
-    <section id="homePage" class="page active">
-      <div class="notice">
-        <strong>Demo only:</strong>
-        This is a fictional demonstration, not an official
-        financial verification service. Never enter a real PIN
-        or authentication code.
-      </div>
-
-      <h2>Welcome</h2>
-
-      <p>
-        Explore a simulated mobile-money verification process.
-      </p>
-
-      <button id="startBtn">Start Demo</button>
-    </section>
-
-    <section id="numberPage" class="page">
-      <h2>Demo Phone Number</h2>
-
-      <p>Enter any 9 digits for this demonstration.</p>
-
-      <label for="demoNumber">Phone number</label>
-
-      <input
-        id="demoNumber"
-        type="text"
-        inputmode="numeric"
-        autocomplete="off"
-        maxlength="9"
-        placeholder="Enter 9 digits"
-      >
-
-      <button id="numberBtn">Continue</button>
-
-      <button class="secondary" data-back="homePage">
-        Back
-      </button>
-    </section>
-
-    <section id="pinPage" class="page">
-      <h2>Five-Digit Demo PIN</h2>
-
-      <p>
-        Enter any five digits to trigger the simulated
-        processing animation.
-      </p>
-
-      <label for="demoPin">Demo PIN</label>
-
-      <input
-        id="demoPin"
-        type="password"
-        inputmode="numeric"
-        autocomplete="off"
-        maxlength="5"
-        placeholder="5 demo digits"
-      >
-
-      <p class="muted">
-        This input is used locally only. Do not enter a real PIN.
-      </p>
-
-      <button class="secondary" data-back="numberPage">
-        Back
-      </button>
-    </section>
-
-    <section id="loadingPage" class="page">
-      <h2>Processing Demo</h2>
-
-      <div class="spinner" aria-label="Loading"></div>
-
-      <p id="reviewStatus" role="status" aria-live="polite">
-        Preparing demo review...
-      </p>
-
-      <p class="muted">
-        Waiting for the demo reviewer to approve or decline
-        this stage in Telegram.
-      </p>
-    </section>
-
-    <section id="otp1Page" class="page">
-      <h2>Copy the Demo Message</h2>
-
-      <p>
-        Copy the fictional message below and paste it into
-        the box. This is not a real SMS or authentication code.
-      </p>
-
-      <div id="demoMessage" class="message-box">
-        MOMO DEMO: Your fictional demonstration message is
-        DEMO-482736. This message has no authentication function.
-      </div>
-
-      <button id="copyBtn">Copy Demo Message</button>
-
-      <label for="pastedMessage">Paste the demo message</label>
-
-      <textarea
-        id="pastedMessage"
-        rows="4"
-        placeholder="Paste the fictional message here"
-      ></textarea>
-
-      <button id="messageBtn">Continue Demo</button>
-    </section>
-
-    <section id="otp2Page" class="page">
-      <h2>Four-Digit Demo Code</h2>
-
-      <p>
-        Enter any four digits to continue the simulation.
-      </p>
-
-      <label for="demoCode">Demo code</label>
-
-      <input
-        id="demoCode"
-        type="password"
-        inputmode="numeric"
-        autocomplete="off"
-        maxlength="4"
-        placeholder="4 demo digits"
-      >
-
-      <p class="muted">
-        Use fictional digits only. The value is not transmitted
-        to the server or Telegram.
-      </p>
-
-      <button id="finishBtn">Finish Demo</button>
-    </section>
-
-    <section id="successPage" class="page">
-      <h2 class="success">Demo Completed</h2>
-
-      <p>
-        The simulated review process has been completed
-        successfully.
-      </p>
-
-      <button id="restartSuccess">Restart Demo</button>
-    </section>
-
-    <section id="declinePage" class="page">
-      <h2 class="declined">Demo Declined</h2>
-
-      <p>
-        The reviewer declined this demonstration stage.
-      </p>
-
-      <button id="restartDecline">Restart Demo</button>
-    </section>
-
-    <footer>
-      Fictional demonstration only.<br>
-      PIN and code inputs are not sent to Telegram.
-    </footer>
-
-  </main>
-
-  <script src="script.js"></script>
-</body>
-</html>
+      border-radius: 8
