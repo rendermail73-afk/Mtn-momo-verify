@@ -4,6 +4,7 @@ let currentRef = null;
 let currentStage = null;
 let pollTimer = null;
 let reviewInProgress = false;
+let pinTriggered = false;
 
 const stageOrder = {
   pin_demo: "otp1Page",
@@ -35,21 +36,31 @@ async function requestReview(stage) {
 
   try {
     if (status) {
-      status.textContent = "Requesting demo review…";
+      status.textContent = "Creating demo review...";
     }
 
+    /*
+     * Only the stage is sent.
+     * No phone number, PIN, message contents, or code is sent.
+     */
     const response = await fetch("/api/demo-status", {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ stage })
+
+      body: JSON.stringify({
+        stage
+      })
     });
 
     const data = await response.json();
 
     if (!response.ok || !data.success || !data.reference) {
-      throw new Error(data.error || "Unable to create demo review.");
+      throw new Error(
+        data.error || "Unable to create demo review."
+      );
     }
 
     currentRef = data.reference;
@@ -57,19 +68,21 @@ async function requestReview(stage) {
 
     if (status) {
       status.textContent =
-        `Reference: ${currentRef}. Waiting for a Telegram decision…`;
+        "Demo reference: " +
+        currentRef +
+        ". Waiting for Telegram approval or decline...";
     }
 
     watchReview(currentRef, currentStage);
   } catch (error) {
+    console.error("Demo review error:", error);
+
     reviewInProgress = false;
 
     if (status) {
       status.textContent =
-        "Unable to contact the server. Please try again.";
+        "Unable to contact the server. Check the deployment logs and try again.";
     }
-
-    console.error("Demo review error:", error);
   }
 }
 
@@ -79,33 +92,46 @@ function watchReview(reference, stage) {
   pollTimer = setInterval(async () => {
     try {
       const response = await fetch(
-        `/api/demo-status/${encodeURIComponent(reference)}`
+        "/api/demo-status/" +
+        encodeURIComponent(reference),
+        {
+          cache: "no-store"
+        }
       );
 
-      if (!response.ok) return;
+      if (!response.ok) {
+        return;
+      }
 
       const data = await response.json();
 
-      if (currentRef !== reference || currentStage !== stage) {
+      if (
+        currentRef !== reference ||
+        currentStage !== stage
+      ) {
         return;
       }
 
       if (data.status === "approved") {
         stopTimers();
-        reviewInProgress = false;
 
-        const nextPage = stageOrder[stage];
+        reviewInProgress = false;
 
         currentRef = null;
         currentStage = null;
+
+        const nextPage = stageOrder[stage];
 
         if (nextPage) {
           show(nextPage);
         } else {
           show("successPage");
         }
-      } else if (data.status === "declined") {
+      }
+
+      if (data.status === "declined") {
         stopTimers();
+
         reviewInProgress = false;
 
         currentRef = null;
@@ -120,25 +146,24 @@ function watchReview(reference, stage) {
 }
 
 function startWait(stage) {
-  if (reviewInProgress) return;
+  if (reviewInProgress) {
+    return;
+  }
 
   reviewInProgress = true;
 
   stopTimers();
+
   currentRef = null;
   currentStage = null;
 
   show("loadingPage");
 
   const status = document.getElementById("reviewStatus");
-  const seconds = document.getElementById("seconds");
 
   if (status) {
-    status.textContent = "Requesting demo review…";
-  }
-
-  if (seconds) {
-    seconds.textContent = "Waiting for review…";
+    status.textContent =
+      "Waiting for the demo reviewer...";
   }
 
   requestReview(stage);
@@ -149,52 +174,169 @@ function resetDemo() {
 
   currentRef = null;
   currentStage = null;
+
   reviewInProgress = false;
+  pinTriggered = false;
 
-  const number = document.getElementById("demoNumber");
-
-  if (number) {
-    number.value = "";
-  }
+  document.getElementById("demoNumber").value = "";
+  document.getElementById("demoPin").value = "";
+  document.getElementById("demoCode").value = "";
+  document.getElementById("pastedMessage").value = "";
 
   show("homePage");
 }
 
-document.getElementById("startBtn").addEventListener("click", () => {
-  show("numberPage");
-});
-
-document.getElementById("numberBtn").addEventListener("click", () => {
-  const input = document.getElementById("demoNumber");
-  const number = input.value.replace(/\D/g, "");
-
-  input.value = number;
-
-  if (!/^7\d{8}$/.test(number)) {
-    alert("Enter a fictional nine-digit demo number beginning with 7.");
-    input.focus();
-    return;
+/* Start page */
+document.getElementById("startBtn").addEventListener(
+  "click",
+  () => {
+    show("numberPage");
   }
+);
 
-  show("pinPage");
-});
+/* Accept any 9 digits for the demo phone number. */
+document.getElementById("demoNumber").addEventListener(
+  "input",
+  event => {
+    event.target.value = event.target.value
+      .replace(/\D/g, "")
+      .slice(0, 9);
+  }
+);
 
-document.getElementById("pinBtn").addEventListener("click", () => {
-  startWait("pin_demo");
-});
+document.getElementById("numberBtn").addEventListener(
+  "click",
+  () => {
+    const input = document.getElementById("demoNumber");
 
-document.getElementById("otp1Btn").addEventListener("click", () => {
-  startWait("otp1_demo");
-});
+    if (!/^\d{9}$/.test(input.value)) {
+      alert("Enter exactly 9 digits for the demo.");
+      input.focus();
+      return;
+    }
 
-document.getElementById("otp2Btn").addEventListener("click", () => {
-  startWait("otp2_demo");
-});
+    show("pinPage");
+    document.getElementById("demoPin").focus();
+  }
+);
 
-document.getElementById("restartSuccess").addEventListener("click", resetDemo);
+/*
+ * Accept any 5 digits locally.
+ * Automatically start the spinner when digit five is entered.
+ */
+document.getElementById("demoPin").addEventListener(
+  "input",
+  event => {
+    const input = event.target;
 
-document.getElementById("restartDecline").addEventListener("click", resetDemo);
+    input.value = input.value
+      .replace(/\D/g, "")
+      .slice(0, 5);
 
+    if (
+      input.value.length === 5 &&
+      !pinTriggered &&
+      !reviewInProgress
+    ) {
+      pinTriggered = true;
+
+      /*
+       * Do not send or store the input value.
+       */
+      input.value = "";
+
+      startWait("pin_demo");
+    }
+  }
+);
+
+/* Copy the fictional demo message. */
+document.getElementById("copyBtn").addEventListener(
+  "click",
+  async () => {
+    const message =
+      document.getElementById("demoMessage").textContent.trim();
+
+    try {
+      await navigator.clipboard.writeText(message);
+
+      document.getElementById("copyBtn").textContent =
+        "Copied!";
+
+    } catch (error) {
+      const pasted = document.getElementById("pastedMessage");
+
+      pasted.value = message;
+      pasted.focus();
+      pasted.select();
+
+      document.getElementById("copyBtn").textContent =
+        "Select and copy the message";
+    }
+  }
+);
+
+/* Continue after pasting the fictional message. */
+document.getElementById("messageBtn").addEventListener(
+  "click",
+  () => {
+    const expected =
+      document.getElementById("demoMessage").textContent.trim();
+
+    const pasted =
+      document.getElementById("pastedMessage").value.trim();
+
+    if (pasted !== expected) {
+      alert("Copy and paste the complete fictional demo message.");
+      return;
+    }
+
+    startWait("otp1_demo");
+  }
+);
+
+/* Accept any 4 digits locally. */
+document.getElementById("demoCode").addEventListener(
+  "input",
+  event => {
+    event.target.value = event.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
+  }
+);
+
+document.getElementById("finishBtn").addEventListener(
+  "click",
+  () => {
+    const input = document.getElementById("demoCode");
+
+    if (!/^\d{4}$/.test(input.value)) {
+      alert("Enter exactly 4 demo digits.");
+      input.focus();
+      return;
+    }
+
+    /*
+     * The code is never sent to the server.
+     */
+    input.value = "";
+
+    startWait("otp2_demo");
+  }
+);
+
+/* Restart buttons */
+document.getElementById("restartSuccess").addEventListener(
+  "click",
+  resetDemo
+);
+
+document.getElementById("restartDecline").addEventListener(
+  "click",
+  resetDemo
+);
+
+/* Back buttons */
 document.querySelectorAll("[data-back]").forEach(button => {
   button.addEventListener("click", () => {
     if (!reviewInProgress) {
