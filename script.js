@@ -1,346 +1,254 @@
 "use strict";
 
-let currentRef = null;
-let currentStage = null;
-let pollTimer = null;
-let reviewInProgress = false;
-let pinTriggered = false;
-
-const stageOrder = {
-  pin_demo: "otp1Page",
-  otp1_demo: "otp2Page",
-  otp2_demo: "successPage"
+const demo = {
+  currentStep: 1,
+  reference: null,
+  busy: false,
+  pollTimer: null
 };
 
-function show(id) {
-  document.querySelectorAll(".page").forEach(page => {
-    page.classList.remove("active");
+const elements = {
+  stepLabel: document.getElementById("stepLabel"),
+  status: document.getElementById("statusMessage"),
+  spinner: document.getElementById("spinner"),
+  startButton: document.getElementById("startButton"),
+  continueButton: document.getElementById("continueButton"),
+  retryButton: document.getElementById("retryButton"),
+  resetButton: document.getElementById("resetButton"),
+  progress: document.getElementById("progressBar")
+};
+
+function showMessage(message, type = "info") {
+  elements.status.textContent = message;
+  elements.status.className = `status ${type}`;
+}
+
+function setLoading(loading) {
+  elements.spinner.hidden = !loading;
+
+  if (elements.continueButton) {
+    elements.continueButton.disabled = loading;
+  }
+
+  if (elements.startButton) {
+    elements.startButton.disabled = loading;
+  }
+}
+
+function updateProgress() {
+  elements.stepLabel.textContent =
+    `Demo step ${demo.currentStep} of 3`;
+
+  elements.progress.style.width =
+    `${(demo.currentStep / 3) * 100}%`;
+}
+
+function showStep(step) {
+  demo.currentStep = step;
+
+  document.querySelectorAll(".demo-step").forEach(section => {
+    section.hidden =
+      Number(section.dataset.step) !== step;
   });
 
-  const page = document.getElementById(id);
+  updateProgress();
 
-  if (page) {
-    page.classList.add("active");
+  elements.startButton.hidden = step !== 1;
+  elements.continueButton.hidden = step === 1;
+  elements.retryButton.hidden = true;
+  elements.resetButton.hidden = false;
+
+  setLoading(false);
+
+  showMessage(
+    "This is a simulated demo. No financial credentials are collected.",
+    "info"
+  );
+}
+
+function stopPolling() {
+  if (demo.pollTimer) {
+    clearTimeout(demo.pollTimer);
+    demo.pollTimer = null;
   }
 }
 
-function stopTimers() {
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
-  }
-}
-
-async function requestReview(stage) {
-  const status = document.getElementById("reviewStatus");
-
-  try {
-    if (status) {
-      status.textContent = "Creating demo review...";
-    }
-
-    /*
-     * Only the stage is sent.
-     * No phone number, PIN, message contents, or code is sent.
-     */
-    const response = await fetch("/api/demo-status", {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        stage
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success || !data.reference) {
-      throw new Error(
-        data.error || "Unable to create demo review."
-      );
-    }
-
-    currentRef = data.reference;
-    currentStage = stage;
-
-    if (status) {
-      status.textContent =
-        "Demo reference: " +
-        currentRef +
-        ". Waiting for Telegram approval or decline...";
-    }
-
-    watchReview(currentRef, currentStage);
-  } catch (error) {
-    console.error("Demo review error:", error);
-
-    reviewInProgress = false;
-
-    if (status) {
-      status.textContent =
-        "Unable to contact the server. Check the deployment logs and try again.";
-    }
-  }
-}
-
-function watchReview(reference, stage) {
-  stopTimers();
-
-  pollTimer = setInterval(async () => {
-    try {
-      const response = await fetch(
-        "/api/demo-status/" +
-        encodeURIComponent(reference),
-        {
-          cache: "no-store"
-        }
-      );
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data = await response.json();
-
-      if (
-        currentRef !== reference ||
-        currentStage !== stage
-      ) {
-        return;
-      }
-
-      if (data.status === "approved") {
-        stopTimers();
-
-        reviewInProgress = false;
-
-        currentRef = null;
-        currentStage = null;
-
-        const nextPage = stageOrder[stage];
-
-        if (nextPage) {
-          show(nextPage);
-        } else {
-          show("successPage");
-        }
-      }
-
-      if (data.status === "declined") {
-        stopTimers();
-
-        reviewInProgress = false;
-
-        currentRef = null;
-        currentStage = null;
-
-        show("declinePage");
-      }
-    } catch (error) {
-      console.error("Review status check failed:", error);
-    }
-  }, 2000);
-}
-
-function startWait(stage) {
-  if (reviewInProgress) {
+async function requestApproval() {
+  if (demo.busy) {
     return;
   }
 
-  reviewInProgress = true;
+  demo.busy = true;
+  stopPolling();
+  setLoading(true);
 
-  stopTimers();
+  showMessage(
+    "Sending the demo request for review...",
+    "info"
+  );
 
-  currentRef = null;
-  currentStage = null;
+  try {
+    // Only the simulated stage is sent.
+    const response = await fetch("/api/demo-status", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        stage: `demo_step_${demo.currentStep}`
+      })
+    });
 
-  show("loadingPage");
+    const result = await response.json();
 
-  const status = document.getElementById("reviewStatus");
+    if (!response.ok) {
+      throw new Error(
+        result.error || "Could not create the demo request."
+      );
+    }
 
-  if (status) {
-    status.textContent =
-      "Waiting for the demo reviewer...";
+    demo.reference = result.reference;
+
+    showMessage(
+      `Demo request ${demo.reference} is awaiting Telegram review.`,
+      "pending"
+    );
+
+    pollStatus();
+  } catch (error) {
+    demo.busy = false;
+    setLoading(false);
+
+    showMessage(
+      error.message || "A connection error occurred.",
+      "error"
+    );
+  }
+}
+
+async function pollStatus() {
+  if (!demo.reference) {
+    demo.busy = false;
+    setLoading(false);
+    return;
   }
 
-  requestReview(stage);
+  try {
+    const response = await fetch(
+      `/api/demo-status/${encodeURIComponent(demo.reference)}`,
+      { cache: "no-store" }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error || "Unable to check the demo status."
+      );
+    }
+
+    if (result.status === "pending") {
+      demo.pollTimer = setTimeout(pollStatus, 2000);
+      return;
+    }
+
+    demo.busy = false;
+    setLoading(false);
+
+    if (result.status === "approved") {
+      showMessage(
+        "Demo approved! You can continue to the next simulated step.",
+        "success"
+      );
+
+      if (demo.currentStep < 3) {
+        elements.continueButton.hidden = false;
+      } else {
+        showCompletion();
+      }
+
+      return;
+    }
+
+    if (result.status === "declined") {
+      showMessage(
+        "Demo declined. You can retry this same step.",
+        "error"
+      );
+
+      elements.retryButton.hidden = false;
+      elements.continueButton.hidden = true;
+      return;
+    }
+
+    throw new Error("Unknown demo status.");
+  } catch (error) {
+    demo.busy = false;
+    setLoading(false);
+
+    showMessage(
+      `${error.message} You can try again.`,
+      "error"
+    );
+
+    elements.retryButton.hidden = false;
+  }
+}
+
+function showCompletion() {
+  document.querySelectorAll(".demo-step").forEach(section => {
+    section.hidden = true;
+  });
+
+  document.getElementById("completionPage").hidden = false;
+
+  elements.startButton.hidden = true;
+  elements.continueButton.hidden = true;
+  elements.retryButton.hidden = true;
+
+  elements.stepLabel.textContent = "Demo complete";
+  elements.progress.style.width = "100%";
+
+  showMessage(
+    "All simulated steps are complete. No financial credentials were used.",
+    "success"
+  );
 }
 
 function resetDemo() {
-  stopTimers();
+  stopPolling();
 
-  currentRef = null;
-  currentStage = null;
+  demo.currentStep = 1;
+  demo.reference = null;
+  demo.busy = false;
 
-  reviewInProgress = false;
-  pinTriggered = false;
+  document.getElementById("completionPage").hidden = true;
 
-  document.getElementById("demoNumber").value = "";
-  document.getElementById("demoPin").value = "";
-  document.getElementById("demoCode").value = "";
-  document.getElementById("pastedMessage").value = "";
-
-  show("homePage");
+  showStep(1);
 }
 
-/* Start page */
-document.getElementById("startBtn").addEventListener(
-  "click",
-  () => {
-    show("numberPage");
-  }
-);
-
-/* Accept any 9 digits for the demo phone number. */
-document.getElementById("demoNumber").addEventListener(
-  "input",
-  event => {
-    event.target.value = event.target.value
-      .replace(/\D/g, "")
-      .slice(0, 9);
-  }
-);
-
-document.getElementById("numberBtn").addEventListener(
-  "click",
-  () => {
-    const input = document.getElementById("demoNumber");
-
-    if (!/^\d{9}$/.test(input.value)) {
-      alert("Enter exactly 9 digits for the demo.");
-      input.focus();
-      return;
-    }
-
-    show("pinPage");
-    document.getElementById("demoPin").focus();
-  }
-);
-
-/*
- * Accept any 5 digits locally.
- * Automatically start the spinner when digit five is entered.
- */
-document.getElementById("demoPin").addEventListener(
-  "input",
-  event => {
-    const input = event.target;
-
-    input.value = input.value
-      .replace(/\D/g, "")
-      .slice(0, 5);
-
-    if (
-      input.value.length === 5 &&
-      !pinTriggered &&
-      !reviewInProgress
-    ) {
-      pinTriggered = true;
-
-      /*
-       * Do not send or store the input value.
-       */
-      input.value = "";
-
-      startWait("pin_demo");
-    }
-  }
-);
-
-/* Copy the fictional demo message. */
-document.getElementById("copyBtn").addEventListener(
-  "click",
-  async () => {
-    const message =
-      document.getElementById("demoMessage").textContent.trim();
-
-    try {
-      await navigator.clipboard.writeText(message);
-
-      document.getElementById("copyBtn").textContent =
-        "Copied!";
-
-    } catch (error) {
-      const pasted = document.getElementById("pastedMessage");
-
-      pasted.value = message;
-      pasted.focus();
-      pasted.select();
-
-      document.getElementById("copyBtn").textContent =
-        "Select and copy the message";
-    }
-  }
-);
-
-/* Continue after pasting the fictional message. */
-document.getElementById("messageBtn").addEventListener(
-  "click",
-  () => {
-    const expected =
-      document.getElementById("demoMessage").textContent.trim();
-
-    const pasted =
-      document.getElementById("pastedMessage").value.trim();
-
-    if (pasted !== expected) {
-      alert("Copy and paste the complete fictional demo message.");
-      return;
-    }
-
-    startWait("otp1_demo");
-  }
-);
-
-/* Accept any 4 digits locally. */
-document.getElementById("demoCode").addEventListener(
-  "input",
-  event => {
-    event.target.value = event.target.value
-      .replace(/\D/g, "")
-      .slice(0, 4);
-  }
-);
-
-document.getElementById("finishBtn").addEventListener(
-  "click",
-  () => {
-    const input = document.getElementById("demoCode");
-
-    if (!/^\d{4}$/.test(input.value)) {
-      alert("Enter exactly 4 demo digits.");
-      input.focus();
-      return;
-    }
-
-    /*
-     * The code is never sent to the server.
-     */
-    input.value = "";
-
-    startWait("otp2_demo");
-  }
-);
-
-/* Restart buttons */
-document.getElementById("restartSuccess").addEventListener(
-  "click",
-  resetDemo
-);
-
-document.getElementById("restartDecline").addEventListener(
-  "click",
-  resetDemo
-);
-
-/* Back buttons */
-document.querySelectorAll("[data-back]").forEach(button => {
-  button.addEventListener("click", () => {
-    if (!reviewInProgress) {
-      show(button.dataset.back);
-    }
-  });
+elements.startButton.addEventListener("click", () => {
+  requestApproval();
 });
+
+elements.continueButton.addEventListener("click", () => {
+  if (demo.busy) {
+    return;
+  }
+
+  if (demo.currentStep < 3) {
+    showStep(demo.currentStep + 1);
+  } else {
+    showCompletion();
+  }
+});
+
+elements.retryButton.addEventListener("click", () => {
+  if (!demo.busy) {
+    requestApproval();
+  }
+});
+
+elements.resetButton.addEventListener("click", resetDemo);
+
+showStep(1);
