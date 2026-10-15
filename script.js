@@ -1,8 +1,31 @@
 let currentRef = null;
+let currentStage = null;
 let pollTimer = null;
 let countdownTimer = null;
 
-// Change the visible page and update progress.
+const stageOrder = {
+  pin_demo: {
+    approvedPage: "otp1Page",
+    approvedStep: 5
+  },
+  otp1_demo: {
+    approvedPage: "otp2Page",
+    approvedStep: 6
+  },
+  otp2_demo: {
+    approvedPage: "successPage",
+    approvedStep: 7
+  }
+};
+
+function stopTimers() {
+  clearInterval(pollTimer);
+  clearInterval(countdownTimer);
+
+  pollTimer = null;
+  countdownTimer = null;
+}
+
 function show(id, step) {
   document.querySelectorAll(".page").forEach(page => {
     page.classList.remove("active");
@@ -10,9 +33,7 @@ function show(id, step) {
 
   const page = document.getElementById(id);
 
-  if (page) {
-    page.classList.add("active");
-  }
+  if (page) page.classList.add("active");
 
   const stepNumber = document.getElementById("stepNumber");
   const progressBar = document.getElementById("progressBar");
@@ -27,9 +48,11 @@ function show(id, step) {
   }
 }
 
-// Send a demo-stage event to the server.
 async function requestReview(stage) {
   const status = document.getElementById("reviewStatus");
+
+  currentStage = stage;
+  currentRef = null;
 
   try {
     if (status) {
@@ -47,84 +70,85 @@ async function requestReview(stage) {
     const data = await response.json();
 
     if (!response.ok || !data.success) {
-      throw new Error(
-        data.error || "Could not create demo review"
-      );
+      throw new Error(data.error || "Demo request failed");
     }
 
     currentRef = data.reference;
 
     if (status) {
       status.textContent =
-        `Demo review requested: ${currentRef}. Waiting for a decision.`;
+        `Review requested. Reference: ${currentRef}`;
     }
 
-    watchReview();
+    watchReview(currentRef, stage);
   } catch (error) {
-    console.error("Demo review error:", error);
+    console.error("Demo request failed:", error);
 
     if (status) {
       status.textContent =
-        "Demo review could not be created. Check the Render logs and Telegram configuration.";
+        "Unable to request review. Check the server logs.";
     }
   }
 }
 
-// Poll the server for the reviewer's decision.
-function watchReview() {
+function watchReview(reference, stage) {
   clearInterval(pollTimer);
-
-  if (!currentRef) {
-    return;
-  }
 
   pollTimer = setInterval(async () => {
     try {
       const response = await fetch(
-        `/api/demo-status/${encodeURIComponent(currentRef)}`
+        `/api/demo-status/${encodeURIComponent(reference)}`
       );
 
-      if (!response.ok) {
-        return;
-      }
+      if (!response.ok) return;
 
       const data = await response.json();
 
-      if (data.status === "approved") {
-        clearInterval(pollTimer);
-        clearInterval(countdownTimer);
+      if (currentRef !== reference || currentStage !== stage) {
+        return;
+      }
 
-        show("otp1Page", 5);
+      if (data.status === "approved") {
+        stopTimers();
+
+        const next = stageOrder[stage];
+
+        currentRef = null;
+        currentStage = null;
+
+        if (next) {
+          show(next.approvedPage, next.approvedStep);
+        }
       } else if (data.status === "declined") {
-        clearInterval(pollTimer);
-        clearInterval(countdownTimer);
+        stopTimers();
+
+        currentRef = null;
+        currentStage = null;
 
         show("declinePage", 7);
       }
     } catch (error) {
-      console.error("Review status check failed:", error);
+      console.error("Status check failed:", error);
     }
   }, 2000);
 }
 
-// Show the loading screen and request Telegram review.
 function startWait(stage) {
-  clearInterval(countdownTimer);
-  clearInterval(pollTimer);
+  stopTimers();
 
   show("loadingPage", 4);
 
   const secondsDisplay = document.getElementById("seconds");
   const status = document.getElementById("reviewStatus");
 
-  if (status) {
-    status.textContent = "Requesting demo review...";
-  }
-
   let seconds = 5;
 
   if (secondsDisplay) {
     secondsDisplay.textContent = `${seconds}s`;
+  }
+
+  if (status) {
+    status.textContent = "Requesting demo review...";
   }
 
   requestReview(stage);
@@ -138,49 +162,78 @@ function startWait(stage) {
 
     if (seconds <= 0) {
       clearInterval(countdownTimer);
+      countdownTimer = null;
 
       if (status) {
         status.textContent =
-          "Waiting for the Approve Demo or Decline Demo decision in Telegram.";
+          "Waiting for the demo reviewer to approve or decline.";
       }
     }
   }, 1000);
 }
 
-// Start the demo.
 document.getElementById("startBtn").addEventListener("click", () => {
   show("numberPage", 2);
 });
 
-// Continue to the demo PIN screen.
 document.getElementById("numberBtn").addEventListener("click", () => {
+  const number = document.getElementById("demoNumber").value.trim();
+
+  if (!number) {
+    alert("Enter a fictional test number.");
+    return;
+  }
+
+  // Only the demo stage is sent to the server.
   show("pinPage", 3);
 });
 
-// Request review for the synthetic PIN demonstration.
 document.getElementById("pinBtn").addEventListener("click", () => {
+  const pin = document.getElementById("demoPin").value;
+
+  if (!/^\d{5}$/.test(pin)) {
+    alert("Enter a five-digit fictional test PIN.");
+    return;
+  }
+
   startWait("pin_demo");
 });
 
-// Continue through the synthetic SMS demonstration.
 document.getElementById("otp1Btn").addEventListener("click", () => {
+  const otp = document.getElementById("demoOtp1").value;
+
+  if (!/^\d{4}$/.test(otp)) {
+    alert("Enter a four-digit fictional test code.");
+    return;
+  }
+
   startWait("otp1_demo");
 });
 
-// Continue through the synthetic four-digit code demonstration.
 document.getElementById("otp2Btn").addEventListener("click", () => {
+  const otp = document.getElementById("demoOtp2").value;
+
+  if (!/^\d{4}$/.test(otp)) {
+    alert("Enter a four-digit fictional test code.");
+    return;
+  }
+
   startWait("otp2_demo");
 });
 
-// Restart from the welcome screen.
 document.getElementById("restartSuccess").addEventListener("click", resetDemo);
 document.getElementById("restartDecline").addEventListener("click", resetDemo);
 
 function resetDemo() {
-  clearInterval(pollTimer);
-  clearInterval(countdownTimer);
+  stopTimers();
 
   currentRef = null;
+  currentStage = null;
+
+  document.getElementById("demoNumber").value = "";
+  document.getElementById("demoPin").value = "";
+  document.getElementById("demoOtp1").value = "";
+  document.getElementById("demoOtp2").value = "";
 
   show("homePage", 1);
 }
