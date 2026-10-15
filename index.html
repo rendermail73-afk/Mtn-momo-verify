@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>MoMo Verification Demo</title>
 
   <style>
@@ -13,73 +12,51 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f5f7;
+      padding: 20px;
+      background: #f4f6f8;
       color: #222;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 25px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
     }
 
     header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 18px;
-      background: #008c45;
+      margin: -24px -24px 22px;
+      padding: 20px;
       color: white;
-    }
-
-    .brand-mark {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: white;
-      color: #008c45;
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    .demo-tag {
-      margin-left: auto;
-      padding: 5px 8px;
-      border-radius: 5px;
-      background: #fff3cd;
-      color: #664d03;
-      font-size: 11px;
-      font-weight: bold;
-    }
-
-    .card {
-      width: calc(100% - 32px);
-      max-width: 440px;
-      margin: 28px auto;
-      padding: 24px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 5px 24px rgba(0, 0, 0, 0.08);
-    }
-
-    .progress {
-      margin-bottom: 28px;
-      color: #666;
-      font-size: 13px;
-    }
-
-    .track {
-      height: 6px;
-      margin-top: 10px;
-      overflow: hidden;
-      background: #e5e7eb;
-      border-radius: 10px;
-    }
-
-    #progressBar {
-      display: block;
-      width: 14%;
-      height: 100%;
       background: #008c45;
-      transition: width 0.3s ease;
+      text-align: center;
+      border-radius: 12px 12px 0 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 23px;
+    }
+
+    h2 {
+      font-size: 20px;
+    }
+
+    p {
+      line-height: 1.5;
+    }
+
+    .notice {
+      padding: 12px;
+      margin-bottom: 18px;
+      color: #664d03;
+      background: #fff3cd;
+      border: 1px solid #ffecb5;
+      border-radius: 6px;
+      font-size: 14px;
     }
 
     .page {
@@ -90,102 +67,53 @@
       display: block;
     }
 
-    .symbol {
-      margin: 15px 0;
-      text-align: center;
-      font-size: 48px;
-    }
-
-    h1 {
-      font-size: 24px;
-      text-align: center;
-    }
-
-    p {
-      line-height: 1.6;
-      color: #555;
-    }
-
-    .notice,
-    .sample-message {
-      margin: 18px 0;
-      padding: 14px;
-      border-radius: 9px;
-      background: #eef8f1;
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-    }
-
-    .notice {
-      background: #fff3cd;
-      color: #664d03;
-      font-size: 13px;
-    }
-
     label {
       display: block;
-      margin-top: 20px;
+      margin: 15px 0 8px;
       font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 18px;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 6px;
+      background: #008c45;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      color: #222;
+      background: #e5e7eb;
     }
 
     .phone-input {
       display: flex;
       align-items: center;
       gap: 8px;
-      width: 100%;
-      margin: 12px 0 8px;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      background: white;
-    }
-
-    .country-flag {
-      font-size: 25px;
     }
 
     .country-code {
-      font-weight: bold;
+      padding: 13px 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
       white-space: nowrap;
-    }
-
-    .phone-input input {
-      flex: 1;
-      min-width: 0;
-      width: 100%;
-      padding: 8px 0;
-      border: none;
-      outline: none;
-      font-size: 16px;
-    }
-
-    .help-text {
-      display: block;
-      margin-bottom: 16px;
-      color: #666;
-      font-size: 12px;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 16px;
-      padding: 14px;
-      border: none;
-      border-radius: 9px;
-      background: #008c45;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #006f37;
-    }
-
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
     }
 
     .spinner {
@@ -204,247 +132,144 @@
       }
     }
 
-    .timer {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-      padding: 12px;
-      background: #f3f5f7;
+    .sample {
+      padding: 18px;
+      margin: 18px 0;
+      background: #f1f5f9;
       border-radius: 8px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 3px;
     }
 
-    .hint {
-      text-align: center;
+    .success {
+      color: #087443;
+    }
+
+    .declined {
+      color: #b42318;
+    }
+
+    .muted {
+      color: #666;
       font-size: 13px;
     }
 
-    .success-symbol {
-      color: #008c45;
-    }
-
-    .decline-symbol {
-      color: #c62828;
-    }
-
     footer {
-      padding: 12px 20px 25px;
+      margin-top: 22px;
       text-align: center;
       color: #666;
       font-size: 12px;
-      line-height: 1.6;
     }
   </style>
 </head>
 
 <body>
+  <main class="container">
+    <header>
+      <h1>MoMo Verification Demo</h1>
+    </header>
 
-<header>
-  <span class="brand-mark">M</span>
-  <strong>MoMo Verification Demo</strong>
-  <span class="demo-tag">DEMO ONLY</span>
-</header>
+    <section id="homePage" class="page active">
+      <div class="notice">
+        <strong>Demo notice:</strong>
+        This is a demonstration only. Do not enter a real mobile-money
+        PIN, OTP, or other financial credentials.
+      </div>
 
-<main class="card">
+      <h2>Welcome</h2>
+      <p>Explore a simulated verification and approval process.</p>
+      <button id="startBtn">Start Demo</button>
+    </section>
 
-  <div class="progress">
-    <span id="stepNumber">Step 1 of 7</span>
+    <section id="numberPage" class="page">
+      <h2>Uganda Demo Number 🇺🇬</h2>
+      <p>Enter a fictional nine-digit demo number beginning with 7.</p>
 
-    <div class="track">
-      <i id="progressBar"></i>
-    </div>
-  </div>
+      <label for="demoNumber">Mobile number</label>
 
-  <!-- WELCOME PAGE -->
+      <div class="phone-input">
+        <span class="country-code">🇺🇬 +256</span>
+        <input
+          id="demoNumber"
+          type="tel"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="9"
+          placeholder="7XXXXXXXX"
+          aria-label="Fictional Uganda demo number"
+        >
+      </div>
 
-  <section class="page active" id="homePage">
-    <div class="symbol">📱</div>
+      <p class="muted">Use a made-up number for this demonstration.</p>
+      <button id="numberBtn">Continue</button>
+      <button class="secondary" data-back="homePage">Back</button>
+    </section>
 
-    <h1>Verification Demo</h1>
+    <section id="pinPage" class="page">
+      <h2>Sample PIN Demo</h2>
+      <p>This stage uses a fixed, fictional sample rather than collecting a real PIN.</p>
 
-    <p>
-      Experience a simulated verification workflow using
-      fictional test values.
-    </p>
+      <div class="sample">12345</div>
 
-    <div class="notice">
-      This is an independent demonstration, not an official MTN
-      service. Never enter real financial credentials or real SMS codes.
-    </div>
+      <button id="pinBtn">Continue Demo</button>
+      <button class="secondary" data-back="numberPage">Back</button>
+    </section>
 
-    <button id="startBtn" type="button">
-      Start Demo →
-    </button>
-  </section>
+    <section id="loadingPage" class="page">
+      <h2>Processing Demo</h2>
 
-  <!-- UGANDA NUMBER PAGE -->
+      <div class="spinner" aria-label="Loading"></div>
 
-  <section class="page" id="numberPage">
-    <div class="symbol">🇺🇬</div>
+      <p id="seconds">Waiting for review…</p>
+      <p id="reviewStatus" role="status" aria-live="polite">
+        Preparing demo review…
+      </p>
 
-    <h1>Uganda Demo Number</h1>
+      <p class="muted">
+        The loader remains active until a demo review decision is received.
+      </p>
+    </section>
 
-    <p>
-      Enter a fictional nine-digit test number beginning with 7.
-    </p>
+    <section id="otp1Page" class="page">
+      <h2>Sample SMS Demo</h2>
+      <p>This is a fictional message for testing the next stage.</p>
 
-    <label for="demoNumber">Mobile number</label>
+      <div class="sample">DEMO-482736</div>
 
-    <div class="phone-input">
-      <span class="country-flag" aria-hidden="true">🇺🇬</span>
+      <p class="muted">This is not a real SMS or authentication code.</p>
+      <button id="otp1Btn">Continue Demo</button>
+    </section>
 
-      <span class="country-code">+256</span>
+    <section id="otp2Page" class="page">
+      <h2>Sample Code Demo</h2>
+      <p>Use this fictional example to complete the demonstration.</p>
 
-      <input
-        type="tel"
-        id="demoNumber"
-        name="demoNumber"
-        placeholder="7XXXXXXXX"
-        inputmode="numeric"
-        autocomplete="off"
-        maxlength="9"
-        pattern="7[0-9]{8}"
-        aria-describedby="numberHelp"
-        required
-      >
-    </div>
+      <div class="sample">222222</div>
 
-    <small class="help-text" id="numberHelp">
-      Enter exactly 9 digits, starting with 7.
-    </small>
+      <p class="muted">This sample has no authentication function.</p>
+      <button id="otp2Btn">Finish Demo</button>
+    </section>
 
-    <button id="numberBtn" type="button">
-      Continue
-    </button>
-  </section>
+    <section id="successPage" class="page">
+      <h2 class="success">Demo Completed</h2>
+      <p>The simulated review process has been completed successfully.</p>
+      <button id="restartSuccess">Restart Demo</button>
+    </section>
 
-  <!-- DUMMY PIN PAGE -->
+    <section id="declinePage" class="page">
+      <h2 class="declined">Demo Declined</h2>
+      <p>The reviewer declined this demo stage.</p>
+      <button id="restartDecline">Restart Demo</button>
+    </section>
 
-  <section class="page" id="pinPage">
-    <div class="symbol">🔒</div>
+    <footer>
+      Demonstration only. No real PINs, OTPs, or financial credentials
+      are collected or sent to Telegram.
+    </footer>
+  </main>
 
-    <h1>Demo PIN</h1>
-
-    <p>
-      This demonstration uses a predefined fictional PIN.
-      No real PIN is requested.
-    </p>
-
-    <div class="sample-message">
-      Sample PIN: <strong>12345</strong>
-    </div>
-
-    <button id="pinBtn" type="button">
-      Continue Demo
-    </button>
-  </section>
-
-  <!-- LOADING AND REVIEW PAGE -->
-
-  <section class="page" id="loadingPage">
-    <div class="spinner" aria-label="Loading"></div>
-
-    <h1>Processing Demo</h1>
-
-    <p class="hint">
-      Waiting for the demo reviewer to make a decision.
-    </p>
-
-    <div class="timer">
-      <span>Elapsed countdown</span>
-      <strong id="seconds">5s</strong>
-    </div>
-
-    <p id="reviewStatus" class="hint" aria-live="polite">
-      Waiting for Telegram review...
-    </p>
-  </section>
-
-  <!-- OTP 1 DEMO PAGE -->
-
-  <section class="page" id="otp1Page">
-    <div class="symbol">💬</div>
-
-    <h1>Sample SMS Demo</h1>
-
-    <p>
-      Continue using the fictional message below.
-      No real SMS message is requested.
-    </p>
-
-    <div class="sample-message">
-      Demo message:
-      <strong>DEMO-482736</strong>
-      <br>
-      This is a fictional test value, not a real verification code.
-    </div>
-
-    <button id="otp1Btn" type="button">
-      Continue Demo
-    </button>
-  </section>
-
-  <!-- OTP 2 DEMO PAGE -->
-
-  <section class="page" id="otp2Page">
-    <div class="symbol">🔢</div>
-
-    <h1>Sample Code Demo</h1>
-
-    <p>
-      Use the predefined fictional code for this demonstration.
-    </p>
-
-    <div class="sample-message">
-      Demo code: <strong>222222</strong>
-    </div>
-
-    <button id="otp2Btn" type="button">
-      Continue Demo
-    </button>
-  </section>
-
-  <!-- SUCCESS PAGE -->
-
-  <section class="page" id="successPage">
-    <div class="symbol success-symbol">✓</div>
-
-    <h1>Demo Completed</h1>
-
-    <p>
-      The fictional demonstration completed successfully
-      following the reviewer's approval.
-    </p>
-
-    <button id="restartSuccess" type="button">
-      Start Again
-    </button>
-  </section>
-
-  <!-- DECLINED PAGE -->
-
-  <section class="page" id="declinePage">
-    <div class="symbol decline-symbol">✕</div>
-
-    <h1>Demo Declined</h1>
-
-    <p>
-      The reviewer declined this demonstration stage.
-    </p>
-
-    <button id="restartDecline" type="button">
-      Try Again
-    </button>
-  </section>
-
-</main>
-
-<footer>
-  Independent demo only. The phone number stays in this browser.
-  Telegram receives the demo stage and reference, not the entered
-  number, PIN, or OTP.
-</footer>
-
-<script src="script.js"></script>
-
+  <script src="script.js"></script>
 </body>
 </html>
