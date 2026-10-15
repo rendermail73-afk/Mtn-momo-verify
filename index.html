@@ -1,56 +1,199 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>MoMo Verification Demo</title>
 
-  <link rel="stylesheet" href="style.css">
-
   <style>
-    .demo-input {
-      display: block;
-      width: 100%;
+    * {
       box-sizing: border-box;
-      padding: 14px;
-      margin: 12px 0 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
     }
 
-    .demo-label {
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f5f7;
+      color: #222;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px;
+      background: #008c45;
+      color: white;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: white;
+      color: #008c45;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .demo-tag {
+      margin-left: auto;
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: #fff3cd;
+      color: #664d03;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .card {
+      width: calc(100% - 32px);
+      max-width: 440px;
+      margin: 28px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 5px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .progress {
+      margin-bottom: 28px;
+      color: #666;
+      font-size: 13px;
+    }
+
+    .track {
+      height: 6px;
+      margin-top: 10px;
+      overflow: hidden;
+      background: #e5e7eb;
+      border-radius: 10px;
+    }
+
+    #progressBar {
       display: block;
-      margin-top: 18px;
-      font-weight: 600;
-      text-align: left;
+      width: 14%;
+      height: 100%;
+      background: #008c45;
+      transition: width 0.3s ease;
     }
 
-    .notice {
-      padding: 12px;
-      margin: 16px 0;
-      border-radius: 8px;
-      background: #fff4d6;
-      color: #684d00;
-      font-size: 14px;
-      line-height: 1.5;
+    .page {
+      display: none;
     }
 
+    .page.active {
+      display: block;
+    }
+
+    .symbol {
+      margin: 15px 0;
+      text-align: center;
+      font-size: 48px;
+    }
+
+    h1 {
+      font-size: 24px;
+      text-align: center;
+    }
+
+    p {
+      line-height: 1.6;
+      color: #555;
+    }
+
+    .notice,
     .sample-message {
+      margin: 18px 0;
       padding: 14px;
-      margin: 16px 0;
-      border-radius: 8px;
-      background: #f2f6f5;
+      border-radius: 9px;
+      background: #eef8f1;
+      line-height: 1.6;
       overflow-wrap: anywhere;
     }
 
+    .notice {
+      background: #fff3cd;
+      color: #664d03;
+      font-size: 13px;
+    }
+
+    label {
+      display: block;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .phone-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      margin: 12px 0 8px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background: white;
+    }
+
+    .country-flag {
+      font-size: 25px;
+    }
+
+    .country-code {
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .phone-input input {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      padding: 8px 0;
+      border: none;
+      outline: none;
+      font-size: 16px;
+    }
+
+    .help-text {
+      display: block;
+      margin-bottom: 16px;
+      color: #666;
+      font-size: 12px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      border: none;
+      border-radius: 9px;
+      background: #008c45;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #006f37;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
     .spinner {
-      width: 42px;
-      height: 42px;
-      margin: 20px auto;
-      border: 5px solid #e0e0e0;
-      border-top-color: #087f5b;
+      width: 48px;
+      height: 48px;
+      margin: 25px auto;
+      border: 5px solid #e5e7eb;
+      border-top-color: #008c45;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -61,291 +204,247 @@
       }
     }
 
-    .success-symbol {
-      color: #087f5b;
-      font-size: 52px;
-    }
-
-    .decline-symbol {
-      color: #c92a2a;
-      font-size: 52px;
+    .timer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      padding: 12px;
+      background: #f3f5f7;
+      border-radius: 8px;
     }
 
     .hint {
-      font-size: 14px;
-      overflow-wrap: anywhere;
+      text-align: center;
+      font-size: 13px;
     }
 
-    button {
-      cursor: pointer;
+    .success-symbol {
+      color: #008c45;
+    }
+
+    .decline-symbol {
+      color: #c62828;
+    }
+
+    footer {
+      padding: 12px 20px 25px;
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      line-height: 1.6;
     }
   </style>
 </head>
 
 <body>
 
-  <header>
-    <span class="brand-mark">M</span>
-    <strong>MoMo Verification Demo</strong>
-    <span class="demo-tag">DEMO</span>
-  </header>
+<header>
+  <span class="brand-mark">M</span>
+  <strong>MoMo Verification Demo</strong>
+  <span class="demo-tag">DEMO ONLY</span>
+</header>
 
-  <main class="card">
+<main class="card">
 
-    <div class="progress">
-      <span id="stepNumber">Step 1 of 7</span>
-      <div class="track">
-        <i id="progressBar"></i>
-      </div>
+  <div class="progress">
+    <span id="stepNumber">Step 1 of 7</span>
+
+    <div class="track">
+      <i id="progressBar"></i>
+    </div>
+  </div>
+
+  <!-- WELCOME PAGE -->
+
+  <section class="page active" id="homePage">
+    <div class="symbol">📱</div>
+
+    <h1>Verification Demo</h1>
+
+    <p>
+      Experience a simulated verification workflow using
+      fictional test values.
+    </p>
+
+    <div class="notice">
+      This is an independent demonstration, not an official MTN
+      service. Never enter real financial credentials or real SMS codes.
     </div>
 
-    <!-- HOME PAGE -->
-    <section class="page active" id="homePage">
+    <button id="startBtn" type="button">
+      Start Demo →
+    </button>
+  </section>
 
-      <div class="symbol">📱</div>
+  <!-- UGANDA NUMBER PAGE -->
 
-      <h1>Verification Demo</h1>
+  <section class="page" id="numberPage">
+    <div class="symbol">🇺🇬</div>
 
-      <p>
-        Explore a simulated verification workflow using fictional
-        demonstration data.
-      </p>
+    <h1>Uganda Demo Number</h1>
 
-      <div class="notice">
-        This is an independent demonstration, not an official MTN
-        service. Never enter real financial PINs, real OTPs, or
-        private SMS messages.
-      </div>
+    <p>
+      Enter a fictional nine-digit test number beginning with 7.
+    </p>
 
-      <button id="startBtn" type="button">
-        Start Demo →
-      </button>
+    <label for="demoNumber">Mobile number</label>
 
-    </section>
+    <div class="phone-input">
+      <span class="country-flag" aria-hidden="true">🇺🇬</span>
 
-    <!-- NUMBER PAGE -->
-    <section class="page" id="numberPage">
-
-      <div class="symbol">☎️</div>
-
-      <h1>Demo Number</h1>
-
-      <p>
-        Enter a fictional test number. This value remains in the
-        browser and is not sent to Telegram.
-      </p>
-
-      <label class="demo-label" for="demoNumber">
-        Test number
-      </label>
+      <span class="country-code">+256</span>
 
       <input
-        class="demo-input"
+        type="tel"
         id="demoNumber"
-        type="text"
+        name="demoNumber"
+        placeholder="7XXXXXXXX"
         inputmode="numeric"
-        maxlength="15"
         autocomplete="off"
-        placeholder="Enter a fictional number"
+        maxlength="9"
+        pattern="7[0-9]{8}"
+        aria-describedby="numberHelp"
+        required
       >
+    </div>
 
-      <button id="numberBtn" type="button">
-        Continue
-      </button>
+    <small class="help-text" id="numberHelp">
+      Enter exactly 9 digits, starting with 7.
+    </small>
 
-    </section>
+    <button id="numberBtn" type="button">
+      Continue
+    </button>
+  </section>
 
-    <!-- DUMMY PIN PAGE -->
-    <section class="page" id="pinPage">
+  <!-- DUMMY PIN PAGE -->
 
-      <div class="symbol">🔒</div>
+  <section class="page" id="pinPage">
+    <div class="symbol">🔒</div>
 
-      <h1>Dummy PIN</h1>
+    <h1>Demo PIN</h1>
 
-      <p>
-        Enter any five-digit fictional test PIN.
-        Do not use a real financial PIN.
-      </p>
+    <p>
+      This demonstration uses a predefined fictional PIN.
+      No real PIN is requested.
+    </p>
 
-      <label class="demo-label" for="demoPin">
-        Five-digit test PIN
-      </label>
+    <div class="sample-message">
+      Sample PIN: <strong>12345</strong>
+    </div>
 
-      <input
-        class="demo-input"
-        id="demoPin"
-        type="password"
-        inputmode="numeric"
-        maxlength="5"
-        autocomplete="off"
-        placeholder="Enter five test digits"
-      >
+    <button id="pinBtn" type="button">
+      Continue Demo
+    </button>
+  </section>
 
-      <button id="pinBtn" type="button">
-        Request Demo Review
-      </button>
+  <!-- LOADING AND REVIEW PAGE -->
 
-    </section>
+  <section class="page" id="loadingPage">
+    <div class="spinner" aria-label="Loading"></div>
 
-    <!-- LOADING / REVIEW PAGE -->
-    <section class="page" id="loadingPage">
+    <h1>Processing Demo</h1>
 
-      <div class="spinner" aria-label="Loading"></div>
+    <p class="hint">
+      Waiting for the demo reviewer to make a decision.
+    </p>
 
-      <h1>Processing Demo</h1>
+    <div class="timer">
+      <span>Elapsed countdown</span>
+      <strong id="seconds">5s</strong>
+    </div>
 
-      <p>
-        Waiting for the demonstration reviewer to make a decision.
-      </p>
+    <p id="reviewStatus" class="hint" aria-live="polite">
+      Waiting for Telegram review...
+    </p>
+  </section>
 
-      <div class="timer">
-        <span>Time remaining</span>
-        <strong id="seconds">5s</strong>
-      </div>
+  <!-- OTP 1 DEMO PAGE -->
 
-      <p
-        id="reviewStatus"
-        class="hint"
-        role="status"
-        aria-live="polite"
-      >
-        Waiting for demo review…
-      </p>
+  <section class="page" id="otp1Page">
+    <div class="symbol">💬</div>
 
-    </section>
+    <h1>Sample SMS Demo</h1>
 
-    <!-- OTP 1 PAGE -->
-    <section class="page" id="otp1Page">
+    <p>
+      Continue using the fictional message below.
+      No real SMS message is requested.
+    </p>
 
-      <div class="symbol">💬</div>
+    <div class="sample-message">
+      Demo message:
+      <strong>DEMO-482736</strong>
+      <br>
+      This is a fictional test value, not a real verification code.
+    </div>
 
-      <h1>OTP 1 — Sample Message</h1>
+    <button id="otp1Btn" type="button">
+      Continue Demo
+    </button>
+  </section>
 
-      <p>
-        Use a fictional four-digit test code for this demonstration.
-        Do not copy real authentication messages from your SMS inbox.
-      </p>
+  <!-- OTP 2 DEMO PAGE -->
 
-      <div class="sample-message">
-        <strong>Example SMS</strong>
-        <p>
-          Your fictional demonstration code is 4827.
-          This is a sample message and is not a real authentication code.
-        </p>
-      </div>
+  <section class="page" id="otp2Page">
+    <div class="symbol">🔢</div>
 
-      <label class="demo-label" for="demoOtp1">
-        Synthetic test code
-      </label>
+    <h1>Sample Code Demo</h1>
 
-      <input
-        class="demo-input"
-        id="demoOtp1"
-        type="text"
-        inputmode="numeric"
-        maxlength="4"
-        autocomplete="off"
-        placeholder="Enter four test digits"
-      >
+    <p>
+      Use the predefined fictional code for this demonstration.
+    </p>
 
-      <button id="otp1Btn" type="button">
-        Request Demo Review
-      </button>
+    <div class="sample-message">
+      Demo code: <strong>222222</strong>
+    </div>
 
-    </section>
+    <button id="otp2Btn" type="button">
+      Continue Demo
+    </button>
+  </section>
 
-    <!-- OTP 2 PAGE -->
-    <section class="page" id="otp2Page">
+  <!-- SUCCESS PAGE -->
 
-      <div class="symbol">🔢</div>
+  <section class="page" id="successPage">
+    <div class="symbol success-symbol">✓</div>
 
-      <h1>OTP 2 — Sample Code</h1>
+    <h1>Demo Completed</h1>
 
-      <p>
-        Enter any four-digit fictional test code.
-        It will not be transmitted to Telegram.
-      </p>
+    <p>
+      The fictional demonstration completed successfully
+      following the reviewer's approval.
+    </p>
 
-      <div class="sample-message">
-        <strong>Sample code: 2222</strong>
-        <p>
-          This code is for demonstration purposes only.
-        </p>
-      </div>
+    <button id="restartSuccess" type="button">
+      Start Again
+    </button>
+  </section>
 
-      <label class="demo-label" for="demoOtp2">
-        Synthetic test code
-      </label>
+  <!-- DECLINED PAGE -->
 
-      <input
-        class="demo-input"
-        id="demoOtp2"
-        type="text"
-        inputmode="numeric"
-        maxlength="4"
-        autocomplete="off"
-        placeholder="Enter four test digits"
-      >
+  <section class="page" id="declinePage">
+    <div class="symbol decline-symbol">✕</div>
 
-      <button id="otp2Btn" type="button">
-        Request Demo Review
-      </button>
+    <h1>Demo Declined</h1>
 
-    </section>
+    <p>
+      The reviewer declined this demonstration stage.
+    </p>
 
-    <!-- SUCCESS PAGE -->
-    <section class="page" id="successPage">
+    <button id="restartDecline" type="button">
+      Try Again
+    </button>
+  </section>
 
-      <div class="symbol success-symbol">✓</div>
+</main>
 
-      <h1>Demo Completed</h1>
+<footer>
+  Independent demo only. The phone number stays in this browser.
+  Telegram receives the demo stage and reference, not the entered
+  number, PIN, or OTP.
+</footer>
 
-      <p>
-        All demonstration stages have been approved.
-        The simulated workflow is complete.
-      </p>
-
-      <div class="notice">
-        This result confirms completion of the demonstration only.
-        It does not verify a real account or financial transaction.
-      </div>
-
-      <button id="restartSuccess" type="button">
-        Start Again
-      </button>
-
-    </section>
-
-    <!-- DECLINE PAGE -->
-    <section class="page" id="declinePage">
-
-      <div class="symbol decline-symbol">✕</div>
-
-      <h1>Demo Declined</h1>
-
-      <p>
-        The reviewer declined this demonstration stage.
-      </p>
-
-      <p>
-        You can restart the fictional demonstration if you want to
-        try the workflow again.
-      </p>
-
-      <button id="restartDecline" type="button">
-        Try Again
-      </button>
-
-    </section>
-
-  </main>
-
-  <footer>
-    Demo only · Uses fictional test data · No real credentials
-    or private SMS messages are transmitted.
-  </footer>
-
-  <script src="script.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
