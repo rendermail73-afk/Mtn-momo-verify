@@ -4,26 +4,23 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Parse incoming requests.
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Telegram configuration from Render environment variables.
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// In-memory storage for demo approval status.
+// Demo-only in-memory storage.
 const demoStatuses = new Map();
-
-// Prevent repeated handling of the same Telegram callback.
 const processedCallbacks = new Set();
 
-// Telegram API helper.
+let pollingStarted = false;
+let pollingStopped = false;
+let pollingConflict = false;
+
 async function telegramRequest(method, body) {
   if (!BOT_TOKEN || !CHAT_ID) {
-    throw new Error(
-      "Telegram is not configured. Check TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID."
-    );
+    throw new Error("Telegram environment variables are missing.");
   }
 
   const response = await fetch(
@@ -33,30 +30,37 @@ async function telegramRequest(method, body) {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(35000)
     }
   );
 
   const result = await response.json();
 
   if (!response.ok || !result.ok) {
-    throw new Error(
-      result.description || "Telegram request failed"
+    const error = new Error(
+      result.description || "Telegram API request failed"
     );
+
+    error.telegramCode = result.error_code;
+    throw error;
   }
 
   return result;
 }
 
-// Health-check endpoint.
+// Health check.
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
-    message: "Demo server is running"
+    message: "Demo server is running",
+    telegramConfigured: Boolean(BOT_TOKEN && CHAT_ID),
+    pollingStarted,
+    pollingConflict
   });
 });
 
-// Create a demo event and send it to Telegram.
+// Create a demo event and send a Telegram message.
 app.post("/api/demo-status", async (req, res) => {
   try {
     const allowedStages = [
@@ -83,8 +87,7 @@ app.post("/api/demo-status", async (req, res) => {
       status: "pending",
       stage,
       createdAt: new Date().toISOString(),
-      messageId: null,
-      chatId: CHAT_ID || null
+      messageId: null
     };
 
     demoStatuses.set(reference, record);
@@ -97,7 +100,7 @@ app.post("/api/demo-status", async (req, res) => {
       `Time: ${record.createdAt}`,
       "",
       "Demonstration only.",
-      "No PINs, OTPs, or private SMS contents are included."
+      "No PINs, passwords, OTPs, or private messages are collected."
     ].join("\n");
 
     if (BOT_TOKEN && CHAT_ID) {
@@ -122,10 +125,7 @@ app.post("/api/demo-status", async (req, res) => {
 
       record.messageId = result.result.message_id;
     } else {
-      console.log(
-        "Telegram is not configured. Demo event:",
-        message
-      );
+      console.log("Telegram not configured:", message);
     }
 
     return res.json({
@@ -135,10 +135,7 @@ app.post("/api/demo-status", async (req, res) => {
       stage: record.stage
     });
   } catch (error) {
-    console.error(
-      "Demo notification error:",
-      error.message
-    );
+    console.error("Demo notification error:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -147,18 +144,18 @@ app.post("/api/demo-status", async (req, res) => {
   }
 });
 
-// Check a demo event's current status.
+// Check demo status.
 app.get("/api/demo-status/:reference", (req, res) => {
   const record = demoStatuses.get(req.params.reference);
 
   if (!record) {
     return res.status(404).json({
       success: false,
-      error: "Demo reference not found"
+      error: "Demo reference not found. The server may have restarted."
     });
   }
 
-  return res.json({
+  res.json({
     success: true,
     reference: req.params.reference,
     status: record.status,
@@ -166,7 +163,7 @@ app.get("/api/demo-status/:reference", (req, res) => {
   });
 });
 
-// Handle a Telegram button press.
+// Process an inline keyboard callback.
 async function processCallback(callback) {
   if (!callback || !callback.id) {
     return;
@@ -176,19 +173,16 @@ async function processCallback(callback) {
     return;
   }
 
-  processedCallbacks.add(callback.id);
+  // Check the callback's chat before accepting a decision.
+  const callbackChatId = callback.message?.chat?.id;
 
-  const callbackMessage = callback.message;
-  const callbackChatId = callbackMessage?.chat?.id;
-
-  // Only accept decisions from the configured Telegram chat.
   if (
     !callbackChatId ||
     String(callbackChatId) !== String(CHAT_ID)
   ) {
     await telegramRequest("answerCallbackQuery", {
       callback_query_id: callback.id,
-      text: "This demo is not authorized for this chat."
+      text: "Unauthorized demo chat."
     });
 
     return;
@@ -198,19 +192,20 @@ async function processCallback(callback) {
   const action = parts[0];
   const reference = parts.slice(1).join(":");
 
+  const record = demoStatuses.get(reference);
+
   if (
     !["approve", "decline"].includes(action) ||
-    !demoStatuses.has(reference)
+    !record
   ) {
     await telegramRequest("answerCallbackQuery", {
       callback_query_id: callback.id,
-      text: "This demo request is unavailable."
+      text: "Demo request unavailable. It may have expired."
     });
 
+    processedCallbacks.add(callback.id);
     return;
   }
-
-  const record = demoStatuses.get(reference);
 
   if (record.status !== "pending") {
     await telegramRequest("answerCallbackQuery", {
@@ -218,29 +213,32 @@ async function processCallback(callback) {
       text: `Already ${record.status}.`
     });
 
+    processedCallbacks.add(callback.id);
     return;
   }
 
-  record.status =
-    action === "approve" ? "approved" : "declined";
-
-  record.decidedAt = new Date().toISOString();
-
+  // Acknowledge the button press.
   await telegramRequest("answerCallbackQuery", {
     callback_query_id: callback.id,
-    text:
-      action === "approve"
-        ? "Demo approved"
-        : "Demo declined"
+    text: action === "approve"
+      ? "Demo approved"
+      : "Demo declined"
   });
 
-  const originalText =
-    callbackMessage.text || "Demo verification event";
+  record.status = action === "approve"
+    ? "approved"
+    : "declined";
 
-  // Remove the buttons after a decision is made.
+  record.decidedAt = new Date().toISOString();
+  processedCallbacks.add(callback.id);
+
+  const originalText =
+    callback.message.text || "Demo verification event";
+
+  // Update the Telegram message and remove its buttons.
   await telegramRequest("editMessageText", {
     chat_id: callbackChatId,
-    message_id: callbackMessage.message_id,
+    message_id: callback.message.message_id,
     text:
       `${originalText}\n\n` +
       `Result: ${record.status.toUpperCase()}\n` +
@@ -255,31 +253,51 @@ async function processCallback(callback) {
   );
 }
 
-// Poll Telegram for inline-button callbacks.
+// Polling is guarded so this function starts only once per process.
 async function handleTelegramUpdates() {
-  if (!BOT_TOKEN || !CHAT_ID) {
-    console.log(
-      "Telegram polling disabled: configure TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID."
-    );
+  if (pollingStarted) {
+    console.log("Polling already started; ignoring duplicate start.");
     return;
   }
+
+  if (!BOT_TOKEN || !CHAT_ID) {
+    console.log("Telegram polling disabled: missing configuration.");
+    return;
+  }
+
+  pollingStarted = true;
 
   let offset = 0;
 
   console.log("Starting Telegram update polling...");
 
-  while (true) {
+  while (!pollingStopped) {
     try {
       const response = await fetch(
-        `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?timeout=25&offset=${offset}&allowed_updates=%5B%22callback_query%22%5D`
+        `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            offset,
+            timeout: 25,
+            allowed_updates: ["callback_query"]
+          }),
+          signal: AbortSignal.timeout(35000)
+        }
       );
 
       const data = await response.json();
 
       if (!response.ok || !data.ok) {
-        throw new Error(
-          data.description || "Telegram update request failed"
+        const error = new Error(
+          data.description || "Telegram polling failed"
         );
+
+        error.telegramCode = data.error_code;
+        throw error;
       }
 
       for (const update of data.result) {
@@ -293,28 +311,39 @@ async function handleTelegramUpdates() {
           await processCallback(update.callback_query);
         } catch (error) {
           console.error(
-            "Could not process Telegram button:",
+            "Button callback failed:",
             error.message
           );
         }
       }
     } catch (error) {
-      console.error(
-        "Telegram polling error:",
-        error.message
-      );
+      console.error("Telegram polling error:", error.message);
 
-      await new Promise(resolve =>
-        setTimeout(resolve, 5000)
-      );
+      if (error.telegramCode === 409) {
+        pollingConflict = true;
+
+        console.error(
+          "Polling stopped because another getUpdates request " +
+          "is active. Stop the other bot instance, then restart " +
+          "this Render service."
+        );
+
+        // Do not keep competing with the other poller.
+        pollingStopped = true;
+        break;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
+
+  pollingStarted = false;
+  console.log("Telegram polling stopped.");
 }
 
-// Serve the frontend from the repository root.
+// Serve the frontend.
 app.use(express.static(__dirname));
 
-// Express 5-compatible fallback route.
 app.use((req, res, next) => {
   if (req.method !== "GET") {
     return next();
@@ -325,14 +354,14 @@ app.use((req, res, next) => {
     error => {
       if (error && !res.headersSent) {
         res.status(error.statusCode || 500).send(
-          "Unable to load the demo page. Check that index.html exists."
+          "Unable to load index.html."
         );
       }
     }
   );
 });
 
-// Start the server.
+// Start the server and polling process.
 app.listen(PORT, () => {
   console.log(`Demo server listening on port ${PORT}`);
   handleTelegramUpdates();
